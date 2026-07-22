@@ -459,7 +459,11 @@ def remove_preview_camera(camera):
 
 # ---------------------------------------------------------------- 自訂預設
 
-def render_thumbnail(context, size=256):
+THUMB_SIZE = 512
+THUMB_SAMPLES = 32
+
+
+def render_thumbnail(context, size=THUMB_SIZE):
     """用臨時的預覽相機算一張方形縮圖，回傳暫存檔路徑。
 
     相機是現建現拆的：算完就移除、場景原本的相機還原回去。使用者只是存了
@@ -481,6 +485,16 @@ def render_thumbnail(context, size=256):
              scene.render.resolution_percentage, scene.render.filepath,
              scene.render.image_settings.file_format)
 
+    # 採樣也要自己指定並還原。不設的話會沿用使用者場景當下的值——
+    # 他若把最終算圖調到 2048，存一張縮圖就要等上好幾分鐘。
+    cycles = getattr(scene, "cycles", None)
+    saved_cycles = None
+    if cycles is not None and hasattr(cycles, "samples"):
+        saved_cycles = (cycles.samples, getattr(cycles, "use_denoising", None))
+        cycles.samples = THUMB_SAMPLES
+        if hasattr(cycles, "use_denoising"):
+            cycles.use_denoising = True    # 32 取樣要靠降噪才乾淨
+
     path = os.path.join(bpy.app.tempdir, "cl12_thumb.png")
     scene.render.resolution_x = size
     scene.render.resolution_y = size
@@ -495,6 +509,10 @@ def render_thumbnail(context, size=256):
         (scene.render.resolution_x, scene.render.resolution_y,
          scene.render.resolution_percentage, scene.render.filepath,
          scene.render.image_settings.file_format) = saved
+        if saved_cycles is not None:
+            cycles.samples = saved_cycles[0]
+            if saved_cycles[1] is not None:
+                cycles.use_denoising = saved_cycles[1]
         if temporary is not None:
             scene.camera = previous
             remove_preview_camera(temporary)

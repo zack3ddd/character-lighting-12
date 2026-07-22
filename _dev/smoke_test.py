@@ -550,6 +550,23 @@ def main():
               "clip_end=%.1f 距離=%.1f" % (camera.data.clip_end, abs(offset.y)))
         ops.remove_preview_camera(camera)
 
+    # 算縮圖不可以改到使用者場景的算圖設定——他若把採樣調到 2048，
+    # 存一張圖要等好幾分鐘；而且改完沒還原，之後正式算圖就變成 32 取樣。
+    cycles = getattr(bpy.context.scene, "cycles", None)
+    if cycles is not None:
+        cycles.samples = 777
+        bpy.context.scene.render.resolution_x = 1234
+        ops_thumb = ops.render_thumbnail(bpy.context)
+        check("縮圖算得出來", ops_thumb is not None and os.path.exists(ops_thumb))
+        check("採樣值有還原", cycles.samples == 777, str(cycles.samples))
+        check("解析度有還原",
+              bpy.context.scene.render.resolution_x == 1234,
+              str(bpy.context.scene.render.resolution_x))
+        if ops_thumb:
+            image = bpy.data.images.load(ops_thumb)
+            check("縮圖是 512×512", tuple(image.size) == (512, 512), str(tuple(image.size)))
+            bpy.data.images.remove(image)
+
     # 使用者只是存一張縮圖，場景不該因此多出一台相機、也不該被換掉主相機。
     cameras_after = len([o for o in bpy.context.scene.objects if o.type == "CAMERA"])
     check("臨時相機用完有收乾淨", cameras_after == cameras_before,
