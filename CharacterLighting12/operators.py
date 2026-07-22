@@ -428,21 +428,49 @@ class CL12_OT_switch_to_cycles(bpy.types.Operator):
 # 上下被切掉、而且原檔相機略高於中心，看起來還會偏。
 PREVIEW_LENS = 1000.0
 PREVIEW_SENSOR = 36.0
-PREVIEW_MARGIN = 1.15        # 主體四周留一點空隙，不要頂到邊
+PREVIEW_MARGIN = 1.15        # 完整框住時四周留的空隙
+PREVIEW_PORTRAIT = 1.55      # 半身構圖：畫面高 ≈ 主體寬 × 這個值
+PREVIEW_HEADROOM = 0.05      # 裁切時頭頂留的空間（佔畫面比例）
+PREVIEW_MIN_COVER = 0.5      # 再瘦長也至少要涵蓋一半高度，不要只剩一顆頭
+
+
+def preview_framing(lo, hi):
+    """算出畫面高度與相機的垂直位置。回傳 (frame, camera_z, cropped)。
+
+    這條規則是從阿哲原檔的相機反推的：畫面高度約等於**主體寬度的 1.55 倍**，
+    並且對齊頭頂留一點空間——不是「固定比例」，而是「以寬度決定、往上對齊」。
+
+    高瘦的角色因此自然裁掉下半身，得到半身像；方正或寬扁的主體（球體、
+    寬扁角色）框得下，就完整置中不裁。同一條規則兩種結果，不用分開處理。
+    """
+    width = max(hi.x - lo.x, 1e-6)
+    height = max(hi.z - lo.z, 1e-6)
+
+    full = max(width, height) * PREVIEW_MARGIN      # 完整框住需要的高度
+    portrait = width * PREVIEW_PORTRAIT             # 半身構圖的高度
+    frame = max(min(full, portrait), full * PREVIEW_MIN_COVER)
+
+    if frame < height:
+        # 框不下 → 對齊頭頂，裁掉下面（這就是原檔那個半身構圖）
+        camera_z = hi.z + frame * PREVIEW_HEADROOM - frame * 0.5
+        cropped = True
+    else:
+        # 框得下 → 置中，上下留白對稱
+        camera_z = (lo.z + hi.z) * 0.5
+        cropped = False
+    return frame, camera_z, cropped
 
 
 def make_preview_camera(context, domain):
-    """建一台把主體完整框進畫面的相機並回傳。
+    """建一台取景與內建縮圖同風格的相機並回傳。
 
     呼叫端負責收掉——縮圖算完就該消失，使用者的場景不該因為存了一張圖
     就多出一台相機。
     """
     lo, hi = domain_mod.subject_bounds(domain)
     centre = (lo + hi) * 0.5
-    size = hi - lo
 
-    # 輸出是正方形，所以取「寬」與「高」較大的那一邊來決定距離。
-    frame = max(size.x, size.z) * PREVIEW_MARGIN
+    frame, camera_z, _cropped = preview_framing(lo, hi)
     if frame <= 1e-6:
         frame = float(domain.get(tags.DOMAIN_REF) or 1.0)
     distance = frame * (PREVIEW_LENS / PREVIEW_SENSOR)
@@ -459,7 +487,7 @@ def make_preview_camera(context, domain):
     data.clip_end = distance + frame * 10.0
 
     context.scene.collection.objects.link(camera)
-    camera.location = (centre.x, centre.y - distance, centre.z)
+    camera.location = (centre.x, centre.y - distance, camera_z)
     camera.rotation_euler = (math.radians(90.0), 0.0, 0.0)
     context.view_layer.update()
     return camera

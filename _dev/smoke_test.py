@@ -554,23 +554,51 @@ def main():
         ndc = [world_to_camera_view(bpy.context.scene, camera, corner)
                for corner in corners]
 
-        inside = all(0.0 <= point.x <= 1.0 and 0.0 <= point.y <= 1.0 and point.z > 0
-                     for point in ndc)
-        check("主體整個框進畫面", inside,
-              "x %.3f~%.3f  y %.3f~%.3f" % (
-                  min(p.x for p in ndc), max(p.x for p in ndc),
-                  min(p.y for p in ndc), max(p.y for p in ndc)))
-
-        # 置中：上下左右留白要對稱，否則看起來就是「偏」。
-        margin_x = (min(p.x for p in ndc), 1.0 - max(p.x for p in ndc))
-        margin_y = (min(p.y for p in ndc), 1.0 - max(p.y for p in ndc))
-        close("水平置中", margin_x[0], margin_x[1], 0.01)
-        close("垂直置中", margin_y[0], margin_y[1], 0.01)
+        # 這個測試主體是 2×2×5 的高瘦體，會走「半身構圖」那條路：
+        # 左右一定要完整、上緣要留一點頭部空間、下面才可以裁。
+        check("左右完整入鏡",
+              all(0.0 <= point.x <= 1.0 for point in ndc),
+              "x %.3f~%.3f" % (min(p.x for p in ndc), max(p.x for p in ndc)))
+        check("水平置中",
+              abs(min(p.x for p in ndc) - (1.0 - max(p.x for p in ndc))) < 0.01)
+        top = max(p.y for p in ndc)
+        check("頭頂在畫面內且有留空間", 0.90 < top < 1.0, "top=%.3f" % top)
+        check("下方有裁到（半身構圖）", min(p.y for p in ndc) < 0.0,
+              "bottom=%.3f" % min(p.y for p in ndc))
 
         check("裁切距離涵蓋得到主體",
               camera.data.clip_end > abs(camera.location.y - domain.location.y) + ref,
               "clip_end=%.1f" % camera.data.clip_end)
         ops.remove_preview_camera(camera)
+
+    # 同一條規則要對兩種身形都成立——這正是阿哲問的「可以兩全嗎」。
+    # 純算式檢查，不用真的建物件。
+    def framing(width, height):
+        lo2 = V((-width / 2, -1.0, 0.0))
+        hi2 = V((width / 2, 1.0, height))
+        frame, camera_z, cropped = ops.preview_framing(lo2, hi2)
+        low = camera_z - frame / 2
+        high = camera_z + frame / 2
+        return frame, low, high, cropped
+
+    _f, low, high, cropped = framing(6.30, 11.54)      # 阿哲的角色（高瘦）
+    check("高瘦角色走半身構圖", cropped)
+    check("半身構圖有裁到腳", low > 0.0, "下緣 %.2f" % low)
+    check("半身構圖頭頂在畫面內", high > 11.54, "上緣 %.2f vs 頭頂 11.54" % high)
+
+    _f, low, high, cropped = framing(2.0, 2.0)         # 球體
+    check("球體不裁切", not cropped)
+    check("球體完整入鏡", low < 0.0 and high > 2.0,
+          "%.2f ~ %.2f" % (low, high))
+
+    _f, low, high, cropped = framing(2.2, 1.4)         # 寬扁角色
+    check("寬扁角色不裁切", not cropped)
+    check("寬扁角色完整入鏡", low < 0.0 and high > 1.4,
+          "%.2f ~ %.2f" % (low, high))
+
+    _f, low, high, cropped = framing(0.5, 10.0)        # 極端瘦長
+    check("極端瘦長至少涵蓋一半高度", (high - low) > 10.0 * 0.5,
+          "畫面高 %.2f" % (high - low))
 
     # 算縮圖不可以改到使用者場景的算圖設定——他若把採樣調到 2048，
     # 存一張圖要等好幾分鐘；而且改完沒還原，之後正式算圖就變成 32 取樣。
