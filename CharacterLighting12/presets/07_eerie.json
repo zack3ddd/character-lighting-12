@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "id": "eerie",
+  "name": {
+    "en": "Eerie",
+    "zh": "靈異"
+  },
+  "desc": {
+    "en": "Place the glowing object below the character, firing upward. Reverse the direction of the light and shadows land where they normally never do.",
+    "zh": "把發光物體放到角色下方往上打，光的方向一反轉，陰影就會落在平常不會出現的位置。"
+  },
+  "tip": {
+    "en": "Our eyes expect light from above, so light from below instinctively feels unsettling. It is a staple of horror films.",
+    "zh": "人眼習慣光來自上方，由下往上的光會本能地讓人覺得不安，這是恐怖片常用的手法。"
+  },
+  "engine_note": null,
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "MESH",
+      "role": "fill",
+      "name": "底光_靈異",
+      "primitive": "PLANE",
+      "pos": [
+        -0.019738,
+        -1.278043,
+        -1.141236
+      ],
+      "rot": [
+        -18.9681,
+        0.0,
+        -0.0
+      ],
+      "dims": [
+        1.519488,
+        1.519488,
+        0.0
+      ],
+      "material": {
+        "recipe": "emission",
+        "color": [
+          0.412737,
+          1.0,
+          0.68772
+        ],
+        "strength": 3.0
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "面部補光_靈異",
+      "light_type": "POINT",
+      "pos": [
+        -0.018984,
+        -0.485221,
+        0.442834
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 0.793201,
+      "shape": {
+        "size": 0.055468
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "頂光_靈異",
+      "light_type": "AREA",
+      "pos": [
+        -0.166087,
+        1.099626,
+        1.88189
+      ],
+      "rot": [
+        -38.4199,
+        5.7137,
+        -20.1819
+      ],
+      "color": [
+        0.055659,
+        0.540573,
+        1.0
+      ],
+      "energy": 117.988418,
+      "shape": {
+        "area_shape": "SQUARE",
+        "size": 4.494613
+      }
+    }
+  ]
+}

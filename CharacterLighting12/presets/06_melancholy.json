@@ -1,0 +1,157 @@
+{
+  "schema": 1,
+  "id": "melancholy",
+  "name": {
+    "en": "Melancholy",
+    "zh": "憂鬱"
+  },
+  "desc": {
+    "en": "Change the colour of the light to express the character's mood.",
+    "zh": "改變燈光的顏色來體現出角色的氛圍。"
+  },
+  "tip": {
+    "en": "Lower intensity and contrast feel more subdued; brighter with stronger contrast feels livelier.",
+    "zh": "燈光強度與對比越低，整體的感覺越抑鬱；越亮，對比越強，則越鮮明活潑。"
+  },
+  "engine_note": null,
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "主光_憂鬱",
+      "light_type": "AREA",
+      "pos": [
+        -2.851554,
+        -3.161893,
+        3.288236
+      ],
+      "rot": [
+        0.0,
+        -53.2199,
+        46.6895
+      ],
+      "color": [
+        0.155167,
+        0.357541,
+        1.0
+      ],
+      "energy": 862.650504,
+      "shape": {
+        "area_shape": "SQUARE",
+        "size": 3.264018
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "右側補光_憂鬱",
+      "light_type": "POINT",
+      "pos": [
+        1.702543,
+        -1.255327,
+        1.02015
+      ],
+      "rot": [
+        43.3105,
+        90.0,
+        0.0
+      ],
+      "color": [
+        0.026265,
+        0.074707,
+        0.143104
+      ],
+      "energy": 901.365196,
+      "shape": {
+        "size": 0.857605
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "rim",
+      "name": "右側輪廓光_憂鬱",
+      "light_type": "AREA",
+      "pos": [
+        0.097476,
+        4.716643,
+        0.101517
+      ],
+      "rot": [
+        -90.0464,
+        90.0,
+        0.0
+      ],
+      "color": [
+        1.0,
+        0.795684,
+        0.716416
+      ],
+      "energy": 120.791196,
+      "shape": {
+        "area_shape": "RECTANGLE",
+        "size": 4.4688,
+        "size_y": 0.5586
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "rim",
+      "name": "左側輪廓光_憂鬱",
+      "light_type": "AREA",
+      "pos": [
+        -1.12249,
+        6.269242,
+        0.101517
+      ],
+      "rot": [
+        -99.9276,
+        90.0,
+        0.0
+      ],
+      "color": [
+        0.955973,
+        0.639038,
+        0.468638
+      ],
+      "energy": 120.30146,
+      "shape": {
+        "area_shape": "RECTANGLE",
+        "size": 4.4688,
+        "size_y": 1.1172
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "面部補光_憂鬱",
+      "light_type": "POINT",
+      "pos": [
+        0.000445,
+        -0.30284,
+        0.342886
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "color": [
+        0.517585,
+        0.667682,
+        1.0
+      ],
+      "energy": 0.60091,
+      "shape": {
+        "size": 0.110069
+      }
+    }
+  ]
+}

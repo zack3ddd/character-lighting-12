@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "id": "futuristic",
+  "name": {
+    "en": "Futuristic",
+    "zh": "未來感"
+  },
+  "desc": {
+    "en": "Two contrasting colours from opposite sides, leaving a dark seam down the middle. The sense of form comes from where the colours meet, not from brightness.",
+    "zh": "用兩個對比色從左右對打，中間留下一條暗部。角色的立體感來自兩色的交界，而不是亮度差。"
+  },
+  "tip": {
+    "en": "Warm against cool gives the strongest contrast. Making the two sides deliberately uneven holds the eye better than an even split.",
+    "zh": "冷暖對比最強烈；兩側強度刻意做得不對稱，畫面會比左右平均更耐看。"
+  },
+  "engine_note": null,
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "LIGHT",
+      "role": "rim",
+      "name": "右側紅光_未來感",
+      "light_type": "POINT",
+      "pos": [
+        1.887239,
+        0.7971,
+        1.492435
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        8.67
+      ],
+      "color": [
+        1.0,
+        0.0,
+        2e-06
+      ],
+      "energy": 600.910072,
+      "shape": {
+        "size": 0.866682
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "rim",
+      "name": "左側藍光_未來感",
+      "light_type": "POINT",
+      "pos": [
+        -1.885766,
+        1.525488,
+        0.067766
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        8.67
+      ],
+      "color": [
+        0.011725,
+        0.030848,
+        1.0
+      ],
+      "energy": 600.910131,
+      "shape": {
+        "size": 0.081222
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "正面主光_未來感",
+      "light_type": "AREA",
+      "pos": [
+        -0.174303,
+        -2.049681,
+        0.578113
+      ],
+      "rot": [
+        81.4691,
+        -0.2946,
+        -3.525
+      ],
+      "color": [
+        0.142539,
+        0.463049,
+        1.0
+      ],
+      "energy": 71.358078,
+      "shape": {
+        "area_shape": "SQUARE",
+        "size": 0.631401
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "面部補光_未來感",
+      "light_type": "SPOT",
+      "pos": [
+        -0.174303,
+        -3.254193,
+        2.516057
+      ],
+      "rot": [
+        55.4692,
+        0.224,
+        -4.2062
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 3744.406933,
+      "shape": {
+        "size": 0.252907,
+        "spot_size": 2.4,
+        "spot_blend": 1.0
+      }
+    }
+  ]
+}

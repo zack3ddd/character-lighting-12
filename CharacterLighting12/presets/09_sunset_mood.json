@@ -1,0 +1,184 @@
+{
+  "schema": 1,
+  "id": "sunset_mood",
+  "name": {
+    "en": "Sunset Mood",
+    "zh": "夕陽氛圍"
+  },
+  "desc": {
+    "en": "A huge gradient sphere wraps the scene and is set to be invisible to the camera. You never see the source, but its colour lands in the highlights and reflections.",
+    "zh": "用一顆巨大的漸層發光球罩住場景，並設為攝影機不可見。畫面上看不到光源，但它的顏色會落在角色的高光與反射上。"
+  },
+  "tip": {
+    "en": "Once a glowing object is invisible to camera you can change its size and brightness freely without affecting the composition. It is the easiest way to control ambient colour.",
+    "zh": "發光物體設為攝影機不可見後，就能自由調整大小與亮度而不影響構圖，是控制環境色最方便的做法。"
+  },
+  "engine_note": "procedural",
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "MESH",
+      "role": "bounce",
+      "name": "反光板_夕陽氛圍",
+      "primitive": "PLANE",
+      "pos": [
+        0.004066,
+        -0.141975,
+        -0.475266
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "dims": [
+        1.108983,
+        1.108983,
+        0.0
+      ],
+      "material": {
+        "recipe": "none"
+      }
+    },
+    {
+      "kind": "MESH",
+      "role": "bounce",
+      "name": "漸層光板_夕陽氛圍",
+      "primitive": "UV_SPHERE",
+      "pos": [
+        -0.012353,
+        -0.060529,
+        -0.107014
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "dims": [
+        6.91056,
+        6.910559,
+        3.455278
+      ],
+      "material": {
+        "recipe": "magic_emission",
+        "magic": {
+          "depth": 2,
+          "scale": 0.5,
+          "distortion": 1.0
+        },
+        "mapping": {
+          "loc": [
+            0,
+            0,
+            0
+          ],
+          "rot": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ],
+          "vector_type": "POINT",
+          "coord": "Generated"
+        },
+        "ramp": {
+          "interpolation": "LINEAR",
+          "stops": [
+            {
+              "pos": 0.0,
+              "color": [
+                0.814856,
+                0.336816,
+                0.016991,
+                1.0
+              ]
+            },
+            {
+              "pos": 0.234383,
+              "color": [
+                0.708943,
+                0.099233,
+                0.068325,
+                1.0
+              ]
+            },
+            {
+              "pos": 0.541432,
+              "color": [
+                1.0,
+                0.171441,
+                0.171441,
+                1.0
+              ]
+            },
+            {
+              "pos": 0.753832,
+              "color": [
+                0.07076,
+                0.69795,
+                1.0,
+                1.0
+              ]
+            },
+            {
+              "pos": 1.0,
+              "color": [
+                0.28983,
+                0.093969,
+                0.458889,
+                1.0
+              ]
+            }
+          ]
+        },
+        "strength": 3.0,
+        "bright_contrast": {
+          "brightness": 0.0,
+          "contrast": 0.2
+        }
+      },
+      "visibility": {
+        "camera": false,
+        "diffuse": false,
+        "transmission": false
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "臉補光_夕陽氛圍",
+      "light_type": "POINT",
+      "pos": [
+        -0.336233,
+        -1.466022,
+        0.569143
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        46.6895
+      ],
+      "color": [
+        0.874884,
+        0.622052,
+        0.238042
+      ],
+      "energy": 187.784416,
+      "shape": {
+        "size": 0.241668
+      }
+    }
+  ]
+}

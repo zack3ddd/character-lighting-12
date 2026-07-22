@@ -1,0 +1,286 @@
+{
+  "schema": 1,
+  "id": "retro",
+  "name": {
+    "en": "Retro",
+    "zh": "復古"
+  },
+  "desc": {
+    "en": "Three warm spot lights fire into thin fog. Once the light scatters through it, the beams themselves become visible.",
+    "zh": "三盞暖色聚光燈打進一團薄霧，光線經過霧氣散射之後，光束本身就變得可見。"
+  },
+  "tip": {
+    "en": "Denser fog makes the beams more visible but lengthens render times. Density is a trade-off between mood and speed.",
+    "zh": "霧的濃度越高，光束越明顯，但算圖時間也會拉長，濃度是氛圍與效率之間的取捨。"
+  },
+  "engine_note": "volume",
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "右側光_復古",
+      "light_type": "SPOT",
+      "pos": [
+        0.756225,
+        -0.459266,
+        0.23334
+      ],
+      "rot": [
+        88.8283,
+        -8.2482,
+        76.4901
+      ],
+      "color": [
+        1.0,
+        0.779535,
+        0.676301
+      ],
+      "energy": 266.65387,
+      "shape": {
+        "size": 0.436808,
+        "spot_size": 45.0,
+        "spot_blend": 0.6065
+      }
+    },
+    {
+      "kind": "MESH",
+      "role": "bounce",
+      "name": "地板_反光_復古",
+      "primitive": "CUBE",
+      "pos": [
+        -0.041161,
+        -0.07735,
+        -0.501227
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "dims": [
+        1.85221,
+        1.85221,
+        0.0
+      ],
+      "material": {
+        "recipe": "emission",
+        "color": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "strength": 0.1
+      },
+      "visibility": {
+        "camera": false
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "左側光_復古",
+      "light_type": "SPOT",
+      "pos": [
+        -0.842562,
+        -0.605605,
+        0.308623
+      ],
+      "rot": [
+        79.7966,
+        0.4444,
+        -55.1921
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 33.801195,
+      "shape": {
+        "size": 0.260005,
+        "spot_size": 34.7,
+        "spot_blend": 0.8529
+      }
+    },
+    {
+      "kind": "MESH",
+      "role": "bounce",
+      "name": "牆壁_復古",
+      "primitive": "MESH",
+      "pos": [
+        -0.028944,
+        -0.07735,
+        0.199085
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "verts": [
+        [
+          -0.966954768,
+          -0.966954768,
+          -0.746748447
+        ],
+        [
+          -0.966954768,
+          -0.966954768,
+          1.06711781
+        ],
+        [
+          -0.966954768,
+          0.966954768,
+          -0.746748447
+        ],
+        [
+          -0.966954768,
+          0.966954768,
+          1.06711781
+        ],
+        [
+          0.966954768,
+          -0.966954768,
+          -0.746748447
+        ],
+        [
+          0.966954768,
+          -0.966954768,
+          1.06711781
+        ],
+        [
+          0.966954768,
+          0.966954768,
+          -0.746748447
+        ],
+        [
+          0.966954768,
+          0.966954768,
+          1.06711781
+        ]
+      ],
+      "material": {
+        "recipe": "none"
+      },
+      "faces": [
+        [
+          0,
+          1,
+          3,
+          2
+        ],
+        [
+          2,
+          3,
+          7,
+          6
+        ],
+        [
+          6,
+          7,
+          5,
+          4
+        ],
+        [
+          7,
+          3,
+          1,
+          5
+        ]
+      ],
+      "visibility": {
+        "camera": false
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "rim",
+      "name": "輪廓光_復古",
+      "light_type": "SPOT",
+      "pos": [
+        -0.044926,
+        0.345528,
+        0.229688
+      ],
+      "rot": [
+        -86.8872,
+        23.327,
+        2.6017
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 18.77844,
+      "shape": {
+        "size": 0.345806,
+        "spot_size": 73.2,
+        "spot_blend": 0.15
+      }
+    },
+    {
+      "kind": "MESH",
+      "role": "practical",
+      "name": "霧氣_復古",
+      "primitive": "CUBE",
+      "pos": [
+        -0.025872,
+        -0.010381,
+        0.233273
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "dims": [
+        1.518055,
+        1.266514,
+        1.488124
+      ],
+      "material": {
+        "recipe": "volume",
+        "color": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "density": 0.002
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "",
+      "name": "面光_復古",
+      "light_type": "POINT",
+      "pos": [
+        -0.016451,
+        -0.338472,
+        0.31712
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 0.375569,
+      "shape": {
+        "size": 0.043334
+      }
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "schema": 1,
+  "id": "blinds",
+  "name": {
+    "en": "Venetian Blinds",
+    "zh": "百葉窗"
+  },
+  "desc": {
+    "en": "Sun light paired with a blocker. The light passes through the slats and leaves stripes on the character. The blocker does not emit, it only removes part of the light.",
+    "zh": "用日光搭配遮擋物，光穿過葉片後在角色身上留下條紋。遮擋物本身不發光，只負責擋掉部分光線。"
+  },
+  "tip": {
+    "en": "The closer the blocker sits to the character, the sharper the stripe edges; further away is softer. Adjusting the blocker's transparency changes how much light passes through, so the shadows never go pure black.",
+    "zh": "遮擋物離角色越近，條紋邊緣越銳利，越遠則越模糊；透過調整遮擋物的透明度，可以適當改變光的穿透性，讓陰影不會死黑。"
+  },
+  "engine_note": null,
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "左側補光_百頁窗",
+      "light_type": "POINT",
+      "pos": [
+        -1.43488,
+        -2.705541,
+        0.989065
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        8.67
+      ],
+      "color": [
+        1.0,
+        0.524262,
+        0.382551
+      ],
+      "energy": 50.610295,
+      "shape": {
+        "size": 0.11172
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "左側補光_百頁窗.001",
+      "light_type": "POINT",
+      "pos": [
+        -0.010648,
+        -0.335622,
+        0.349026
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        8.67
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 0.375569,
+      "shape": {
+        "size": 0.080519
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "日光_百頁窗",
+      "light_type": "SUN",
+      "pos": [
+        6.058918,
+        -4.330248,
+        0.790432
+      ],
+      "rot": [
+        -2.4931,
+        83.4638,
+        -37.6528
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 15.000001,
+      "shape": {
+        "sun_angle": 0.4805
+      }
+    },
+    {
+      "kind": "MESH",
+      "role": "practical",
+      "name": "遮擋_百頁窗",
+      "primitive": "QUAD",
+      "pos": [
+        2.480764,
+        -1.69124,
+        -3.090315
+      ],
+      "rot": [
+        180.0,
+        -0.0,
+        -19.5663
+      ],
+      "verts": [
+        [
+          0.776158035,
+          2.786686182,
+          -2.837188721
+        ],
+        [
+          0.776158035,
+          2.786686182,
+          -2.800353527
+        ],
+        [
+          -0.776158035,
+          -2.786686182,
+          -2.837188959
+        ],
+        [
+          -0.776158035,
+          -2.786686182,
+          -2.800353765
+        ]
+      ],
+      "material": {
+        "recipe": "principled",
+        "base_color": [
+          0.8,
+          0.8,
+          0.8
+        ],
+        "metallic": 0.0,
+        "roughness": 0.5,
+        "alpha": 0.724771,
+        "transmission": 0.0,
+        "ior": 1.5,
+        "blend_method": "HASHED"
+      },
+      "modifiers": [
+        {
+          "type": "ARRAY",
+          "count": 30,
+          "relative_offset": [
+            0.0,
+            0.0,
+            -1.66
+          ]
+        }
+      ],
+      "visibility": {
+        "camera": false
+      }
+    }
+  ]
+}

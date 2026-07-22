@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "id": "beauty_ring",
+  "name": {
+    "en": "Beauty Ring",
+    "zh": "網美"
+  },
+  "desc": {
+    "en": "Glowing objects can copy the shape of real-world sources such as ring lights or foam boards, which brings you close to a real-world result.",
+    "zh": "發光物體的形狀可以參考現實世界的光源形狀，如網美燈、泡沫板等，也會得到接近真實世界的效果。"
+  },
+  "tip": {
+    "en": "The shape of the glowing object changes the shape of the catchlight in the eyes, which can suggest a different personality.",
+    "zh": "透過發光物體的形狀，改變角色的眼睛反射出來的光點形狀，也能呈現不同的角色性格。"
+  },
+  "engine_note": null,
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "右側光_網美",
+      "light_type": "POINT",
+      "pos": [
+        0.61147,
+        0.802966,
+        0.259314
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "color": [
+        0.0,
+        0.20376,
+        1.0
+      ],
+      "energy": 52.579633,
+      "shape": {
+        "size": 0.650011
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "左側光_網美",
+      "light_type": "POINT",
+      "pos": [
+        -0.593738,
+        0.847298,
+        0.373894
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "color": [
+        1.0,
+        0.354549,
+        0.154791
+      ],
+      "energy": 52.579633,
+      "shape": {
+        "size": 0.292072
+      }
+    },
+    {
+      "kind": "MESH",
+      "role": "fill",
+      "name": "面光_網美",
+      "primitive": "TORUS",
+      "pos": [
+        -0.014297,
+        -0.663458,
+        0.312559
+      ],
+      "rot": [
+        90.0,
+        -0.0,
+        0.0
+      ],
+      "dims": [
+        0.758797,
+        0.758797,
+        0.151759
+      ],
+      "material": {
+        "recipe": "emission",
+        "color": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "strength": 8.849999
+      },
+      "visibility": {
+        "camera": false
+      }
+    }
+  ]
+}

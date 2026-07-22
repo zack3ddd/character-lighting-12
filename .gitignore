@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+
+# 打包產物走 Release，不進版控
+CharacterLighting12.zip
+
+# 開發用的暫存與備份
+_dev/acceptance_out/
+_dev/presets_backup_*/
+_dev/__pycache__/
+
+# 阿哲的工作檔，不隨外掛發佈
+參考用.blend
+*.blend1

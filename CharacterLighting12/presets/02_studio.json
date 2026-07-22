@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "id": "studio",
+  "name": {
+    "en": "Studio",
+    "zh": "一般棚燈"
+  },
+  "desc": {
+    "en": "The standard three-point setup. The key lights the subject, the fill lifts the shadows, and the rim separates the character from the background.",
+    "zh": "標準的主光、輔光、輪廓光三點打光。主光的目的為照亮、輔光的目的為提亮暗部、輪廓光則能夠把角色從背景裡凸顯出來。"
+  },
+  "tip": {
+    "en": "Keep a clear hierarchy between light and dark. The key must be brighter than the fill — a scene needs both to have depth.",
+    "zh": "打光要維持亮暗的主次感，主光一定要比輔光亮，有亮有暗場景才會有層次與立體感。"
+  },
+  "engine_note": null,
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "LIGHT",
+      "role": "key",
+      "name": "主光",
+      "light_type": "AREA",
+      "pos": [
+        0.652045,
+        -0.729589,
+        0.757831
+      ],
+      "rot": [
+        58.1086,
+        5.2396,
+        60.7943
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 48.823948,
+      "shape": {
+        "area_shape": "SQUARE",
+        "size": 0.223604
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "左側補光",
+      "light_type": "AREA",
+      "pos": [
+        -0.787026,
+        -0.598301,
+        0.145853
+      ],
+      "rot": [
+        55.7069,
+        -99.8872,
+        -19.2816
+      ],
+      "color": [
+        1.0,
+        0.853788,
+        0.638103
+      ],
+      "energy": 2.359768,
+      "shape": {
+        "area_shape": "SQUARE",
+        "size": 1.530159
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "fill",
+      "name": "眼睛反光",
+      "light_type": "POINT",
+      "pos": [
+        0.048186,
+        -0.424836,
+        0.348489
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "color": [
+        1.0,
+        0.99651,
+        0.960747
+      ],
+      "energy": 0.671517,
+      "shape": {
+        "size": 0.071718
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "rim",
+      "name": "輪廓光",
+      "light_type": "AREA",
+      "pos": [
+        -0.136487,
+        1.213205,
+        0.239977
+      ],
+      "rot": [
+        -56.2358,
+        -79.8407,
+        -34.7787
+      ],
+      "color": [
+        0.674053,
+        0.824458,
+        0.960747
+      ],
+      "energy": 44.738258,
+      "shape": {
+        "area_shape": "SQUARE",
+        "size": 3.408864
+      }
+    }
+  ]
+}

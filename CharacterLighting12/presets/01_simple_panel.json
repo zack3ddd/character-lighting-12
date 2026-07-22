@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "id": "simple_panel",
+  "name": {
+    "en": "Simple Panel",
+    "zh": "簡單光板"
+  },
+  "desc": {
+    "en": "Besides lamps, a glowing object can act as the key light. You can shape it however you like, and the result looks natural.",
+    "zh": "除了燈光，也可以用一塊「會發光的物體」當主光，除了可以任意制定形狀外，效果也很自然。"
+  },
+  "tip": {
+    "en": "The larger the glowing surface, the softer the shadow.",
+    "zh": "發光物體面積越大，影子越柔。"
+  },
+  "engine_note": null,
+  "world": {
+    "color": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "strength": 1.0
+  },
+  "objects": [
+    {
+      "kind": "MESH",
+      "role": "key",
+      "name": "主光_簡單光板",
+      "primitive": "MESH",
+      "pos": [
+        -1.01794,
+        -2.425359,
+        2.15493
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        26.4454
+      ],
+      "verts": [
+        [
+          -1.16e-07,
+          -1.302730203,
+          1.685886145
+        ],
+        [
+          1.16e-07,
+          -1.302730203,
+          -1.685886145
+        ],
+        [
+          -1.16e-07,
+          1.302730203,
+          1.685886145
+        ],
+        [
+          1.16e-07,
+          1.302730203,
+          -1.685886145
+        ]
+      ],
+      "material": {
+        "recipe": "emission",
+        "color": [
+          0.8,
+          0.8,
+          0.8
+        ],
+        "strength": 17.0
+      },
+      "faces": [
+        [
+          0,
+          1,
+          3,
+          2
+        ]
+      ],
+      "visibility": {
+        "camera": false
+      }
+    },
+    {
+      "kind": "LIGHT",
+      "role": "rim",
+      "name": "輪廓光_簡單光板",
+      "light_type": "POINT",
+      "pos": [
+        1.246943,
+        3.330467,
+        2.408416
+      ],
+      "rot": [
+        0.0,
+        -0.0,
+        46.6895
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 75.70762,
+      "shape": {
+        "size": 0.11172
+      }
+    }
+  ]
+}
