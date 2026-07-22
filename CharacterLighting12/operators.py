@@ -459,7 +459,7 @@ def remove_preview_camera(camera):
 
 # ---------------------------------------------------------------- 自訂預設
 
-THUMB_SIZE = 512
+THUMB_SIZE = 256
 THUMB_SAMPLES = 32
 
 

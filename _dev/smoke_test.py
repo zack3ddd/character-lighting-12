@@ -564,7 +564,7 @@ def main():
               str(bpy.context.scene.render.resolution_x))
         if ops_thumb:
             image = bpy.data.images.load(ops_thumb)
-            check("縮圖是 512×512", tuple(image.size) == (512, 512), str(tuple(image.size)))
+            check("縮圖是 256×256", tuple(image.size) == (256, 256), str(tuple(image.size)))
             bpy.data.images.remove(image)
 
     # 使用者只是存一張縮圖，場景不該因此多出一台相機、也不該被換掉主相機。
