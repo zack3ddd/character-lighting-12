@@ -101,6 +101,19 @@ class CL12_PT_main(bpy.types.Panel):
                  icon="CHECKBOX_HLT" if context.scene.cl12.use_gpu
                  else "CHECKBOX_DEHLT")
 
+        # 視圖採樣與降噪：調燈時盯的是即時預覽，這兩個決定你當下看到什麼。
+        # Cycles 沒啟用時 scene.cycles 不存在，要防呆。
+        cycles = getattr(context.scene, "cycles", None)
+        if cycles is not None:
+            preview = box.row(align=True)
+            preview.enabled = is_cycles
+            if hasattr(cycles, "preview_samples"):
+                preview.prop(cycles, "preview_samples",
+                             text=i18n.t("Viewport Samples", "視圖採樣值"))
+            if hasattr(cycles, "use_preview_denoising"):
+                preview.prop(cycles, "use_preview_denoising", toggle=True,
+                             text=i18n.t("Denoise", "降噪"))
+
         if is_cycles and not properties.gpu_available():
             hint = box.column(align=True)
             hint.scale_y = 0.85
@@ -119,7 +132,7 @@ class CL12_PT_main(bpy.types.Panel):
 
     def _draw_step_subject(self, layout, context, settings, domain):
         box = layout.box()
-        box.label(text=i18n.t("1. Subject", "1. 主體"), icon="OUTLINER_OB_ARMATURE")
+        box.label(text=i18n.t("1. Subject", "1. 主體"), icon="OBJECT_DATA")
 
         column = box.column(align=True)
         column.scale_y = 1.3
@@ -282,13 +295,18 @@ class CL12_PT_main(bpy.types.Panel):
 
     # ------------------------------------------------------------ 工具
 
+    # 量出來的寬度跟 label() 實際能放的寬度總有落差（元件內距、字距微調、
+    # blf 與 UI 繪製用的不完全是同一條路徑）。寧可早一點換行，也不要被截成
+    # 「⋯」——少換一行只是版面鬆一點，被截斷是真的看不到字。
+    TEXT_SAFETY = 0.88
+
     @staticmethod
-    def _measure(text, size):
-        """量文字的像素寬度。blf.size 的簽章在 4.0 改過，兩種都要接。"""
+    def _measure(text, size, dpi):
+        """量文字的像素寬度。blf.size 的簽章在 4.0 拿掉了 dpi，兩種都要接。"""
         try:
             blf.size(0, size)
         except TypeError:
-            blf.size(0, size, 72)
+            blf.size(0, size, dpi)
         return blf.dimensions(0, text)[0]
 
     @classmethod
@@ -304,14 +322,23 @@ class CL12_PT_main(bpy.types.Panel):
         column = layout.column(align=True)
         column.scale_y = scale
 
-        ui_scale = context.preferences.system.ui_scale
-        size = max(int(round(11 * ui_scale)), 8)
+        preferences = context.preferences
+        ui_scale = preferences.system.ui_scale
+        # 字級要從偏好設定讀，使用者調過介面字級也才會跟著對。
+        try:
+            points = preferences.ui_styles[0].widget.points
+        except (AttributeError, IndexError):
+            points = 11.0
+        size = max(int(round(points * ui_scale)), 8)
+        dpi = getattr(preferences.system, "dpi", 72)
+
         available = max(context.region.width - indent * ui_scale, 60)
         if icon != "NONE":
             available -= 20 * ui_scale
+        available *= cls.TEXT_SAFETY
 
         def measure(value):
-            return cls._measure(value, size)
+            return cls._measure(value, size, dpi)
 
         try:
             measure("測試")
