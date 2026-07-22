@@ -419,9 +419,7 @@ def main():
 
     before = set(presets.load_all().keys())
     result = bpy.ops.cl12.new_preset(
-        name_zh="測試組", name_en="Test Set",
-        desc_zh="說明", tip_zh="提示",
-        thumb_source="FILE", thumb_file=thumb_file)
+        preset_name="測試組", thumb_source="FILE", thumb_file=thumb_file)
     check("新增預設回傳 FINISHED", result == {"FINISHED"})
 
     new_ids = set(presets.load_all().keys()) - before
@@ -432,7 +430,6 @@ def main():
         created = presets.get(new_id)
         check("新預設是使用者版本", created.get("_is_user") is True)
         check("名稱有存到", presets.localized(created, "name", "zh") == "測試組")
-        check("說明有存到", presets.localized(created, "desc", "zh") == "說明")
         check("縮圖有嵌進 JSON", bool(created.get("thumbnail_png")))
         check("物件數與光域一致",
               len(created["objects"]) == len(tags.domain_children(domain)),
@@ -504,6 +501,21 @@ def main():
         check("%s 沒有掉字" % label, joined == original,
               "原 %d 字 → 折後 %d 字" % (len(original), len(joined)))
         check("%s 有真的折成多行" % label, len(lines) > 1, "只有 %d 行" % len(lines))
+
+    # 「覆蓋」的對象必須是已套用的那組，不是縮圖牆上瀏覽的那組。
+    # 兩者不同時若存錯目標，使用者會覆蓋掉他沒在看的預設。
+    settings.active_preset = "smoke_test"
+    bpy.context.scene.cl12_preview = presets.ordered()[0]["id"]
+    if bpy.context.scene.cl12_preview != "smoke_test":
+        before_text = json.dumps(
+            presets.get(bpy.context.scene.cl12_preview)["objects"], sort_keys=True)
+        bpy.ops.cl12.save_preset()
+        presets.invalidate()
+        after_text = json.dumps(
+            presets.get(bpy.context.scene.cl12_preview)["objects"], sort_keys=True)
+        check("覆蓋不會動到正在瀏覽的另一組", before_text == after_text)
+        check("覆蓋確實寫到已套用的那組",
+              presets.get("smoke_test").get("_is_user") is True)
 
     check("極窄寬度不會無限迴圈",
           len(ui.wrap_text("測試文字很長很長", 1.0, fake_measure)) == 8)

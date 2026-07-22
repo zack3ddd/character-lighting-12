@@ -63,9 +63,12 @@ class CL12_PT_main(bpy.types.Panel):
         layout.separator()
         self._draw_step_preset(layout, context, settings, domain)
 
-        if domain is not None and settings.active_preset:
-            layout.separator()
-            self._draw_step_adjust(layout, context, settings)
+        if domain is not None:
+            if settings.active_preset:
+                layout.separator()
+                self._draw_step_adjust(layout, context, settings)
+            # 儲存區不綁「已套用預設」——學員可能自己從零搭燈光再存成新預設，
+            # 或想匯入別人的檔案。綁死的話這兩件事都做不到。
             layout.separator()
             self._draw_step_save(layout, context, settings)
 
@@ -262,13 +265,30 @@ class CL12_PT_main(bpy.types.Panel):
         is_custom = bool(current and current.get("_is_user")
                          and not current.get("_overrides_builtin"))
 
+        # ⚠️ 覆蓋的對象是「已套用的那組」，不是縮圖牆上正在瀏覽的那組。
+        # 兩者可以不同（翻縮圖不會改變場景裡的燈），所以按鈕上一定要寫出
+        # 實際會被蓋掉的名字——不然使用者會覆蓋到他沒在看的預設。
+        applied = presets.get(settings.active_preset)
         row = box.row(align=True)
-        row.operator("cl12.save_preset",
-                     text=i18n.t("Overwrite", "覆蓋目前這組"), icon="FILE_TICK")
-        data = presets.get(settings.active_preset)
-        if data is not None and data.get("_is_user"):
+        overwrite = row.row(align=True)
+        overwrite.enabled = applied is not None
+        if applied is not None:
+            label = i18n.t("Overwrite \"%s\"", "覆蓋「%s」") % presets.localized(
+                applied, "name", i18n.language())
+        else:
+            label = i18n.t("Overwrite", "覆蓋目前這組")
+        overwrite.operator("cl12.save_preset", text=label, icon="FILE_TICK")
+
+        if applied is not None and applied.get("_is_user"):
             row.operator("cl12.revert_preset",
                          text="", icon="LOOP_BACK").preset_id = settings.active_preset
+
+        if applied is not None and current is not None \
+                and applied["id"] != current["id"]:
+            hint = box.column(align=True)
+            hint.scale_y = 0.85
+            hint.label(text=i18n.t("Browsing a different preset",
+                                   "你正在瀏覽另一組預設"), icon="INFO")
 
         box.operator("cl12.new_preset",
                      text=i18n.t("New Preset", "新增預設"), icon="ADD")

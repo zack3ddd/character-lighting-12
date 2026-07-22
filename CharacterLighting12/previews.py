@@ -53,7 +53,13 @@ def preset_items(self, context):
 
 
 def _on_preview_change(self, context):
-    context.scene.cl12.active_preset = self.cl12_preview
+    """翻縮圖牆**不會**改變「已套用的是哪一組」。
+
+    `cl12_preview` = UI 上正在瀏覽的；`cl12.active_preset` = 場景裡實際套用的。
+    以前這裡會順手把 active_preset 一起改掉，結果「覆蓋」永遠蓋到正在瀏覽的
+    那組，而不是燈光實際所屬的那組——翻個縮圖就可能蓋掉別組的設定。
+    active_preset 只能由「套用燈光」來改。
+    """
 
 
 def refresh():

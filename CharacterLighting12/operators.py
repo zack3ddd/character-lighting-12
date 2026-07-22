@@ -504,12 +504,7 @@ class CL12_OT_new_preset(bpy.types.Operator):
     bl_label = "新增預設"
     bl_description = "把目前光域裡的燈光存成一組新的預設"
 
-    name_zh: StringProperty(name="名稱", default="")
-    name_en: StringProperty(name="Name", default="")
-    desc_zh: StringProperty(name="說明", default="",
-                            description="這是什麼光、用了什麼手法")
-    tip_zh: StringProperty(name="提示", default="",
-                           description="一個可以立刻動手試的變化")
+    preset_name: StringProperty(name="名稱", default="")
     thumb_source: bpy.props.EnumProperty(
         name="縮圖",
         items=(
@@ -530,17 +525,19 @@ class CL12_OT_new_preset(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         column = layout.column()
-        column.prop(self, "name_zh")
-        column.prop(self, "name_en")
-        column.separator()
-        column.prop(self, "desc_zh")
-        column.prop(self, "tip_zh")
-        column.separator()
+        column.prop(self, "preset_name")
         column.prop(self, "thumb_source")
         if self.thumb_source == "FILE":
             column.prop(self, "thumb_file")
-        elif self.thumb_source == "RENDER" and context.scene.camera is None:
-            column.label(text="場景沒有相機，會跳過縮圖", icon="ERROR")
+        elif self.thumb_source == "RENDER":
+            note = column.column(align=True)
+            note.scale_y = 0.85
+            if context.scene.camera is None:
+                note.label(text="場景沒有相機，會跳過縮圖", icon="ERROR")
+            else:
+                # 按下確定就開始算圖，畫面會卡住。先講，不然使用者會以為當掉。
+                note.label(text="按下確定後會算一張圖，", icon="INFO")
+                note.label(text="場景越複雜等越久，期間畫面會沒有反應。")
 
     def execute(self, context):
         target = tags.find_domain(context)
@@ -548,20 +545,18 @@ class CL12_OT_new_preset(bpy.types.Operator):
             self.report({"ERROR"}, "請先建立光域")
             return {"CANCELLED"}
 
-        display = self.name_zh.strip() or self.name_en.strip()
+        display = self.preset_name.strip()
         if not display:
             self.report({"ERROR"}, "請輸入名稱")
             return {"CANCELLED"}
 
-        preset_id = presets.make_id(self.name_en or self.name_zh,
-                                    set(presets.load_all().keys()))
+        preset_id = presets.make_id(display, set(presets.load_all().keys()))
         base = {
             "schema": presets.SCHEMA,
             "id": preset_id,
-            "name": {"en": self.name_en.strip() or display,
-                     "zh": self.name_zh.strip() or display},
-            "desc": {"en": "", "zh": self.desc_zh.strip()},
-            "tip": {"en": "", "zh": self.tip_zh.strip()},
+            "name": {"en": display, "zh": display},
+            "desc": {"en": "", "zh": ""},
+            "tip": {"en": "", "zh": ""},
             "engine_note": None,
             "_filename": "zz_%s.json" % preset_id,   # 排在內建 12 組後面
         }

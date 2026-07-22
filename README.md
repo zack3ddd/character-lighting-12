@@ -30,9 +30,9 @@ Because everything is stored relative to subject size, the same preset works on 
 
 | | | |
 |---|---|---|
-| Simple Panel | Studio | Angel |
-| Beauty Ring | Influencer | Moody |
-| Horror | Blinds | Sunset |
+| Simple Panel | Studio | Angel Light |
+| Beauty Ring | Influencer | Melancholy |
+| Eerie | Venetian Blinds | Sunset Mood |
 | Futuristic | Gradient | Retro |
 
 Ordered by how much there is to learn from them, not alphabetically — start at the top.
@@ -44,6 +44,10 @@ Ordered by how much there is to learn from them, not alphabetically — start at
 - **Four global controls**: intensity, colour temperature, distance, rotation. Hand-tweak any individual light afterwards; the sliders work on top of your changes rather than wiping them
 - **Save your own version**: adjust the lights in the viewport, press save. Built-in presets are never overwritten, and there's a one-click revert
 - **Load Example**: brings in a sample character and a matching camera, so you can see each light the way it was designed. Press again to remove it — nothing is left in your scene unless you ask for it
+- **Isolate the subject**: one click hides the scene's existing lights and other objects, so what you see matches the thumbnails
+- **Make your own presets**: build a rig, press New Preset, and it joins the wall with its own thumbnail — rendered from your camera or from an image you supply
+- **Preview Camera**: reproduces the framing the built-in thumbnails were shot with, so your own thumbnails match
+- **Export / Import**: a preset is a single file, thumbnail included. Back it up or hand it to someone else
 - **Bilingual UI**: follows Blender's own language setting
 
 ## Requires Cycles
@@ -61,11 +65,11 @@ The values were calibrated in Cycles. Several presets rely on volumetric fog and
 ## Usage
 
 1. Open the N-panel → **Lighting** tab
-2. Select your character → press **Set Subject & Build Domain**
+2. Select your character → press **Build Light Domain**
    (or press **Load Example** if you just want to look around first)
-3. Flip through the thumbnails, read the note, press **Apply This Light**
+3. Flip through the thumbnails, read the note, press **Apply Light**
 4. Adjust with the four sliders, or grab any light and move it yourself
-5. Happy with it? **Update This Preset** saves your version
+5. Happy with it? **Overwrite** saves your version, or **New Preset** makes a new one
 
 ## Compatibility
 
@@ -123,6 +127,10 @@ Released under the **GNU GPL**. Author: Zack3D.
 - **四個全域控制**：強度、色溫、距離、旋轉。你可以先手動微調某一盞燈，滑桿是**疊在你的調整之上**，不會把你的手動修改洗掉
 - **存成自己的版本**：在視窗裡把燈調到滿意，按存檔。內建預設永遠不會被蓋掉，而且可以一鍵還原
 - **載入範例**：帶進一個範例角色與對應的相機，讓你用設計時的視角看每一種光。再按一次就移除——你不叫它，它不會出現在你的場景裡
+- **孤立主體**：一鍵隱藏場景原有的燈光與其他物件，看到的畫面才跟縮圖一致
+- **做自己的預設**：搭好燈光按「新增預設」，它就會出現在縮圖牆上，縮圖可以從你的相機算，也可以用你自己的圖
+- **預覽相機**：重現內建 12 張縮圖的取景，讓你自己的縮圖跟它們一致
+- **匯出／匯入**：一組預設就是一個檔案，縮圖含在裡面。可以備份，也可以給別人
 - **雙語介面**：跟隨 Blender 自己的語言設定
 
 ## 需要 Cycles
@@ -140,11 +148,11 @@ Released under the **GNU GPL**. Author: Zack3D.
 ## 使用方式
 
 1. 打開 N 面板 → **打光** 分頁
-2. 選取你的角色 → 按 **選取主體並建立光域**
+2. 選取你的角色 → 按 **建立光域**
    （想先隨便看看的話，直接按 **載入範例**）
-3. 翻縮圖、讀說明、按 **套用這組燈光**
+3. 翻縮圖、讀說明、按 **套用燈光**
 4. 用四個滑桿調整，或直接抓某一盞燈自己移
-5. 滿意了就按 **更新這個預設**，存成你自己的版本
+5. 滿意了按 **覆蓋** 存成自己的版本，或按 **新增預設** 另存一組
 
 ## 相容性
 
