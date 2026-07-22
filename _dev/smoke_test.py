@@ -541,13 +541,35 @@ def main():
     check("預覽相機建得出來", camera is not None)
     if camera:
         close("鏡頭 1000mm", camera.data.lens, 1000.0, 1e-3)
-        offset = V(camera.matrix_world.translation) - V(domain.location)
-        close("相機距離 = ref × 23.537", abs(offset.y), ref * 23.537, ref * 0.01)
-        close("相機高度 = ref × 0.111", offset.z, ref * 0.111, ref * 0.01)
-        # 1000mm 在 23 倍遠處，預設裁切距離會看不到主體。
+
+        # 真正該驗的是「主體有沒有整個進到畫面裡、有沒有偏」——
+        # 驗相機座標只是驗我自己的算式，驗投影才是驗結果。
+        from bpy_extras.object_utils import world_to_camera_view
+        lo, hi = domain_mod.subject_bounds(domain)
+        corners = [V((x, y, z)) for x in (lo.x, hi.x)
+                   for y in (lo.y, hi.y) for z in (lo.z, hi.z)]
+        bpy.context.scene.render.resolution_x = 256
+        bpy.context.scene.render.resolution_y = 256
+        bpy.context.view_layer.update()
+        ndc = [world_to_camera_view(bpy.context.scene, camera, corner)
+               for corner in corners]
+
+        inside = all(0.0 <= point.x <= 1.0 and 0.0 <= point.y <= 1.0 and point.z > 0
+                     for point in ndc)
+        check("主體整個框進畫面", inside,
+              "x %.3f~%.3f  y %.3f~%.3f" % (
+                  min(p.x for p in ndc), max(p.x for p in ndc),
+                  min(p.y for p in ndc), max(p.y for p in ndc)))
+
+        # 置中：上下左右留白要對稱，否則看起來就是「偏」。
+        margin_x = (min(p.x for p in ndc), 1.0 - max(p.x for p in ndc))
+        margin_y = (min(p.y for p in ndc), 1.0 - max(p.y for p in ndc))
+        close("水平置中", margin_x[0], margin_x[1], 0.01)
+        close("垂直置中", margin_y[0], margin_y[1], 0.01)
+
         check("裁切距離涵蓋得到主體",
-              camera.data.clip_end > abs(offset.y) + ref,
-              "clip_end=%.1f 距離=%.1f" % (camera.data.clip_end, abs(offset.y)))
+              camera.data.clip_end > abs(camera.location.y - domain.location.y) + ref,
+              "clip_end=%.1f" % camera.data.clip_end)
         ops.remove_preview_camera(camera)
 
     # 算縮圖不可以改到使用者場景的算圖設定——他若把採樣調到 2048，

@@ -420,31 +420,46 @@ class CL12_OT_switch_to_cycles(bpy.types.Operator):
 
 # ---------------------------------------------------------------- 預覽相機
 
-# 從原始教學檔的相機反推出來的構圖規則（相對於主體尺寸 ref）。
-# 照這個擺，任何角色都會得到跟內建 12 張縮圖一致的取景。
+# 沿用原始教學檔的 1000mm 長焦（那個平面、少透視的味道就來自它），
+# 但取景改成「把主體整個框進去並置中」。
+#
+# ⚠️ 不能照抄原檔的相機距離比例。原檔那個構圖刻意只框到胸口——分母是全身高，
+# 畫面卻只涵蓋 0.85 倍，對高瘦角色是好看的半身像，對球體或寬扁的主體就變成
+# 上下被切掉、而且原檔相機略高於中心，看起來還會偏。
 PREVIEW_LENS = 1000.0
-PREVIEW_OFFSET = (-0.017, -23.537, 0.111)   # × ref，相對主體中心
+PREVIEW_SENSOR = 36.0
+PREVIEW_MARGIN = 1.15        # 主體四周留一點空隙，不要頂到邊
 
 
 def make_preview_camera(context, domain):
-    """依光域尺寸建一台與內建縮圖同構圖的相機，並回傳它。
+    """建一台把主體完整框進畫面的相機並回傳。
 
     呼叫端負責收掉——縮圖算完就該消失，使用者的場景不該因為存了一張圖
     就多出一台相機。
     """
-    ref = float(domain.get(tags.DOMAIN_REF) or 1.0)
+    lo, hi = domain_mod.subject_bounds(domain)
+    centre = (lo + hi) * 0.5
+    size = hi - lo
+
+    # 輸出是正方形，所以取「寬」與「高」較大的那一邊來決定距離。
+    frame = max(size.x, size.z) * PREVIEW_MARGIN
+    if frame <= 1e-6:
+        frame = float(domain.get(tags.DOMAIN_REF) or 1.0)
+    distance = frame * (PREVIEW_LENS / PREVIEW_SENSOR)
+
     data = bpy.data.cameras.new("CL12 Preview Camera")
     camera = bpy.data.objects.new("CL12 Preview Camera", data)
     camera[tags.PREVIEW_CAMERA] = True
 
     data.lens = PREVIEW_LENS
-    data.sensor_width = 36.0
-    # 1000mm 長焦代表相機離主體 23 倍遠，預設的裁切距離會看不到東西。
-    data.clip_start = max(0.1, ref * 0.5)
-    data.clip_end = ref * 100.0
+    data.sensor_width = PREVIEW_SENSOR
+    data.sensor_fit = "AUTO"
+    # 長焦代表相機站得很遠，預設的裁切距離會什麼都看不到。
+    data.clip_start = max(0.01, distance - frame)
+    data.clip_end = distance + frame * 10.0
 
     context.scene.collection.objects.link(camera)
-    camera.location = Vector(domain.location) + Vector(PREVIEW_OFFSET) * ref
+    camera.location = (centre.x, centre.y - distance, centre.z)
     camera.rotation_euler = (math.radians(90.0), 0.0, 0.0)
     context.view_layer.update()
     return camera
