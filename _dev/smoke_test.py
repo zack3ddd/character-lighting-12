@@ -481,6 +481,34 @@ def main():
               "clip_end=%.1f 距離=%.1f" % (camera.data.clip_end, abs(offset.y)))
         bpy.data.objects.remove(camera, do_unlink=True)
 
+    print("\n=== 6f. 面板文字折行 ===")
+    from CharacterLighting12 import ui
+
+    # 模擬 Blender 的字寬：中日韓字約是英文的兩倍。
+    def fake_measure(value):
+        return sum(2.0 if ord(ch) > 0x2E7F else 1.0 for ch in value) * 6.0
+
+    for label, source in (
+        ("中文", presets.get("melancholy")["tip"]["zh"]),
+        ("英文", presets.get("melancholy")["tip"]["en"]),
+        ("中英混排", "把 Intensity 調到 60%，暗部會吃掉更多細節 detail。"),
+    ):
+        lines = ui.wrap_text(source, 200.0, fake_measure)
+        # 一、不能超寬（超寬就會被 Blender 截成「⋯」，正是阿哲遇到的問題）
+        widest = max(fake_measure(line) for line in lines)
+        check("%s 每行都不超寬" % label, widest <= 200.0,
+              "最寬 %.0f > 200" % widest)
+        # 二、不能吃掉字（折行最容易犯、又最難用眼睛發現的錯）
+        joined = "".join(lines).replace(" ", "")
+        original = source.replace(" ", "")
+        check("%s 沒有掉字" % label, joined == original,
+              "原 %d 字 → 折後 %d 字" % (len(original), len(joined)))
+        check("%s 有真的折成多行" % label, len(lines) > 1, "只有 %d 行" % len(lines))
+
+    check("極窄寬度不會無限迴圈",
+          len(ui.wrap_text("測試文字很長很長", 1.0, fake_measure)) == 8)
+    check("空字串不會炸", ui.wrap_text("", 200.0, fake_measure) == [])
+
     print("\n=== 7. 錯誤路徑 ===")
     # operator 回報 ERROR 時 bpy.ops 會丟 RuntimeError，這是正常行為。
     try:

@@ -5,6 +5,7 @@
 不是熟手——他要看得出「先做這個、再做那個」。
 """
 
+import blf
 import bpy
 
 from . import i18n, presets, properties, tags
@@ -12,6 +13,36 @@ from .operators import EXAMPLE_COLLECTION
 
 PANEL_CATEGORY_EN = "Lighting"
 PANEL_CATEGORY_ZH = "打光"
+
+
+def wrap_text(text, available, measure):
+    """把 text 折成不超過 available 像素的多行。
+
+    抽成獨立函式是為了測得到——折行邏輯埋在 draw() 裡的話，
+    headless 測試永遠碰不到它，而「文字被默默吃掉」正是最需要測的。
+
+    `measure(str) -> float` 由呼叫端提供，正式執行時用 blf 量真實像素。
+    """
+    lines = []
+    line = ""
+    breakable = " " in text          # 英文在空白斷，中文哪裡都能斷
+
+    for char in text:
+        candidate = line + char
+        if line and measure(candidate) > available:
+            if breakable and " " in line.strip():
+                head, _, tail = line.rstrip().rpartition(" ")
+                lines.append(head)
+                line = tail + char
+            else:
+                lines.append(line)
+                line = char
+        else:
+            line = candidate
+
+    if line.strip():
+        lines.append(line)
+    return [item.strip() for item in lines if item.strip()]
 
 
 class CL12_PT_main(bpy.types.Panel):
@@ -160,7 +191,8 @@ class CL12_PT_main(bpy.types.Panel):
         tip = presets.localized(data, "tip", language)
         if tip:
             tip_box = box.box()
-            self._wrapped(tip_box, context, tip, scale=0.85, icon="LIGHT")
+            self._wrapped(tip_box, context, tip, scale=0.85, icon="LIGHT",
+                          indent=52)
 
         note = data.get("engine_note")
         if note and context.scene.render.engine != "CYCLES":
@@ -251,24 +283,45 @@ class CL12_PT_main(bpy.types.Panel):
     # ------------------------------------------------------------ 工具
 
     @staticmethod
-    def _wrapped(layout, context, text, scale=1.0, icon="NONE"):
-        """N 面板很窄，長句子要自己折行，不然會被切掉。"""
-        width = max(int(context.region.width / 7.0), 16)
+    def _measure(text, size):
+        """量文字的像素寬度。blf.size 的簽章在 4.0 改過，兩種都要接。"""
+        try:
+            blf.size(0, size)
+        except TypeError:
+            blf.size(0, size, 72)
+        return blf.dimensions(0, text)[0]
+
+    @classmethod
+    def _wrapped(cls, layout, context, text, scale=1.0, icon="NONE", indent=34):
+        """N 面板很窄，長句子要自己折行，不然 Blender 會把整行截成「⋯」。
+
+        ⚠️ **不能用「字數 × 固定像素」估寬度。** 中文字寬大約是英文的兩倍，
+        用同一個係數算，中文那行就會遠超過實際可用寬度而被截斷。
+        這裡直接用 blf 量真實像素寬，所以中英混排也準，面板縮放時會跟著重折。
+
+        `indent` 是外框與圖示佔掉的像素（在 box 裡再包一層 box 要給大一點）。
+        """
         column = layout.column(align=True)
         column.scale_y = scale
 
-        line = ""
-        lines = []
-        for char in text:
-            line += char
-            # 中文沒有空白可以斷，直接照寬度硬折；英文遇到空白才折。
-            if len(line) >= width and (char == " " or ord(char) > 0x2000):
-                lines.append(line.strip())
-                line = ""
-        if line.strip():
-            lines.append(line.strip())
+        ui_scale = context.preferences.system.ui_scale
+        size = max(int(round(11 * ui_scale)), 8)
+        available = max(context.region.width - indent * ui_scale, 60)
+        if icon != "NONE":
+            available -= 20 * ui_scale
 
-        for index, content in enumerate(lines):
+        def measure(value):
+            return cls._measure(value, size)
+
+        try:
+            measure("測試")
+        except Exception:
+            # blf 不可用時退回估算：中日韓字算兩格，其餘算一格。
+            def measure(value):
+                units = sum(2 if ord(ch) > 0x2E7F else 1 for ch in value)
+                return units * size * 0.55
+
+        for index, content in enumerate(wrap_text(text, available, measure)):
             column.label(text=content, icon=icon if index == 0 else "NONE")
 
 
