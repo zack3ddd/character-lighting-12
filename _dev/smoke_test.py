@@ -110,6 +110,24 @@ SYNTHETIC = {
 }
 
 
+REAL_PRESETS = None
+BEFORE = {}
+
+
+def real_snapshot(directory):
+    """{檔名: (大小, 修改時間)}。用來確認測試沒有動到使用者的真實資料。"""
+    if not directory or not os.path.isdir(directory):
+        return {}
+    snapshot = {}
+    for name in os.listdir(directory):
+        if not name.endswith(".json"):
+            continue
+        full = os.path.join(directory, name)
+        info = os.stat(full)
+        snapshot[name] = (info.st_size, info.st_mtime_ns)
+    return snapshot
+
+
 def isolate_user_data(presets):
     """把測試的讀寫全部導到暫存區。
 
@@ -143,8 +161,12 @@ def main():
     from CharacterLighting12 import builder, extract, presets, tags  # noqa: F401
     import CharacterLighting12 as addon
 
-    sandbox = isolate_user_data(presets)
+    global REAL_PRESETS, BEFORE
     real = bpy.utils.user_resource("CONFIG", path="character_lighting_12")
+    REAL_PRESETS = os.path.join(real, "presets")
+    BEFORE = real_snapshot(REAL_PRESETS)
+
+    sandbox = isolate_user_data(presets)
     check("測試資料已隔離到暫存區", sandbox.startswith(bpy.app.tempdir), sandbox)
     check("沒有指向真實設定夾", not sandbox.startswith(real), real)
 
@@ -495,12 +517,28 @@ def main():
                   len(restored["objects"]) == len(created["objects"]))
             presets.delete_user(new_id)
 
+    # 空光域不該存得出預設——存出來套用之後毫無反應，使用者找不出哪裡壞。
+    empty_before = set(presets.load_all().keys())
+    domain_mod = sys.modules["CharacterLighting12"].domain
+    domain_mod.clear_domain_lights(domain)
+    try:
+        outcome = bpy.ops.cl12.new_preset(preset_name="空的", thumb_source="NONE")
+        blocked = outcome == {"CANCELLED"}
+    except RuntimeError:
+        blocked = True
+    check("空光域不能存成預設", blocked)
+    check("空光域也沒有偷偷產生檔案",
+          set(presets.load_all().keys()) == empty_before)
+    bpy.ops.cl12.apply_preset(preset_id="smoke_test")   # 復原給後面的測試用
+
     print("\n=== 6e. 預覽相機 ===")
-    result = bpy.ops.cl12.preview_camera()
-    check("建立預覽相機回傳 FINISHED", result == {"FINISHED"})
-    camera = next((o for o in bpy.context.scene.objects
-                   if o.type == "CAMERA" and tags.PREVIEW_CAMERA in o), None)
-    check("預覽相機存在", camera is not None)
+    from CharacterLighting12 import operators as ops
+
+    cameras_before = len([o for o in bpy.context.scene.objects if o.type == "CAMERA"])
+    scene_camera_before = bpy.context.scene.camera
+
+    camera = ops.make_preview_camera(bpy.context, domain)
+    check("預覽相機建得出來", camera is not None)
     if camera:
         close("鏡頭 1000mm", camera.data.lens, 1000.0, 1e-3)
         offset = V(camera.matrix_world.translation) - V(domain.location)
@@ -510,7 +548,16 @@ def main():
         check("裁切距離涵蓋得到主體",
               camera.data.clip_end > abs(offset.y) + ref,
               "clip_end=%.1f 距離=%.1f" % (camera.data.clip_end, abs(offset.y)))
-        bpy.data.objects.remove(camera, do_unlink=True)
+        ops.remove_preview_camera(camera)
+
+    # 使用者只是存一張縮圖，場景不該因此多出一台相機、也不該被換掉主相機。
+    cameras_after = len([o for o in bpy.context.scene.objects if o.type == "CAMERA"])
+    check("臨時相機用完有收乾淨", cameras_after == cameras_before,
+          "前 %d 後 %d" % (cameras_before, cameras_after))
+    check("場景原本的相機沒有被換掉",
+          bpy.context.scene.camera == scene_camera_before)
+    check("相機資料塊也一併清掉",
+          not any("CL12 Preview" in c.name for c in bpy.data.cameras))
 
     print("\n=== 6f. 面板文字折行 ===")
     from CharacterLighting12 import ui
@@ -580,15 +627,17 @@ def main():
     addon.unregister()
     check("unregister() 沒有丟例外", True)
 
-    # 收尾再確認一次真實設定夾沒有被寫到——這是這支測試唯一不能出的錯。
-    real_presets = os.path.join(
-        bpy.utils.user_resource("CONFIG", path="character_lighting_12"), "presets")
-    leaked = []
-    if os.path.isdir(real_presets):
-        leaked = [name for name in os.listdir(real_presets)
-                  if name.endswith(".json") and (
-                      "smoke" in name or name.startswith("zz_"))]
-    check("沒有把測試資料寫進真實設定夾", not leaked, "、".join(leaked))
+    # 收尾比對開頭拍的快照。用檔名樣式判斷不行——`zz_` 正是使用者自訂預設的
+    # 正常前綴，那樣會把阿哲自己建的預設誤判成外洩。只認這次真的動過的。
+    changed = []
+    now = real_snapshot(REAL_PRESETS)
+    for name, stamp in now.items():
+        if BEFORE.get(name) != stamp:
+            changed.append(name)
+    for name in BEFORE:
+        if name not in now:
+            changed.append("%s（被刪除）" % name)
+    check("沒有動到真實設定夾裡的任何檔案", not changed, "、".join(changed))
 
     try:
         os.remove(path)

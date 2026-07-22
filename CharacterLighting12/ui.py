@@ -291,12 +291,17 @@ class CL12_PT_main(bpy.types.Panel):
                                    "你正在瀏覽另一組預設"), icon="INFO")
 
         box.operator("cl12.new_preset",
-                     text=i18n.t("New Preset", "新增預設"), icon="ADD")
+                     text=i18n.t("New Light Preset", "新增燈光預設"), icon="ADD")
 
-        # 預覽相機：自訂預設的縮圖要跟內建 12 張構圖一致，得靠它。
-        box.operator("cl12.preview_camera",
-                     text=i18n.t("Preview Camera", "建立預覽相機"),
-                     icon="OUTLINER_OB_CAMERA")
+        # 縮圖：重算走臨時的預覽相機（算完自動移除），或直接載入現成圖片。
+        if current is not None:
+            thumb = box.row(align=True)
+            thumb.operator("cl12.replace_thumbnail",
+                           text=i18n.t("Re-render Thumb", "重算縮圖"),
+                           icon="RESTRICT_RENDER_OFF").preset_id = current["id"]
+            thumb.operator("cl12.load_thumbnail",
+                           text=i18n.t("Load Thumb", "載入縮圖"),
+                           icon="FILE_IMAGE").preset_id = current["id"]
 
         transfer = box.row(align=True)
         transfer.operator("cl12.export_preset",
@@ -306,11 +311,11 @@ class CL12_PT_main(bpy.types.Panel):
 
         if is_custom:
             box.operator("cl12.delete_preset",
-                         text=i18n.t("Delete This Preset", "刪除這組預設"),
+                         text=i18n.t("Delete Light Preset", "刪除燈光預設"),
                          icon="TRASH").preset_id = current["id"]
 
         box.operator("cl12.open_preset_folder",
-                     text=i18n.t("Open Preset Folder", "開啟預設資料夾"),
+                     text=i18n.t("Open Preset Folder", "開啟燈光預設資料夾"),
                      icon="FILEBROWSER")
 
     # ------------------------------------------------------------ 工具

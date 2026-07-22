@@ -267,7 +267,7 @@ class CL12_OT_revert_preset(bpy.types.Operator):
 
 class CL12_OT_open_preset_folder(bpy.types.Operator):
     bl_idname = "cl12.open_preset_folder"
-    bl_label = "開啟預設資料夾"
+    bl_label = "開啟燈光預設資料夾"
     bl_description = "打開存放自訂預設的資料夾"
 
     def execute(self, context):
@@ -426,55 +426,55 @@ PREVIEW_LENS = 1000.0
 PREVIEW_OFFSET = (-0.017, -23.537, 0.111)   # × ref，相對主體中心
 
 
-class CL12_OT_preview_camera(bpy.types.Operator):
-    bl_idname = "cl12.preview_camera"
-    bl_label = "建立預覽相機"
-    bl_description = ("建立一台與內建預設縮圖相同構圖的相機，"
-                      "讓你自訂預設的縮圖看起來一致")
-    bl_options = {"REGISTER", "UNDO"}
+def make_preview_camera(context, domain):
+    """依光域尺寸建一台與內建縮圖同構圖的相機，並回傳它。
 
-    def execute(self, context):
-        target = tags.find_domain(context)
-        if target is None:
-            self.report({"ERROR"}, "請先建立光域")
-            return {"CANCELLED"}
+    呼叫端負責收掉——縮圖算完就該消失，使用者的場景不該因為存了一張圖
+    就多出一台相機。
+    """
+    ref = float(domain.get(tags.DOMAIN_REF) or 1.0)
+    data = bpy.data.cameras.new("CL12 Preview Camera")
+    camera = bpy.data.objects.new("CL12 Preview Camera", data)
+    camera[tags.PREVIEW_CAMERA] = True
 
-        ref = float(target.get(tags.DOMAIN_REF) or 1.0)
-        centre = Vector(target.location)
+    data.lens = PREVIEW_LENS
+    data.sensor_width = 36.0
+    # 1000mm 長焦代表相機離主體 23 倍遠，預設的裁切距離會看不到東西。
+    data.clip_start = max(0.1, ref * 0.5)
+    data.clip_end = ref * 100.0
 
-        camera = next((obj for obj in context.scene.objects
-                       if obj.type == "CAMERA" and tags.PREVIEW_CAMERA in obj), None)
-        if camera is None:
-            data = bpy.data.cameras.new("CL12 Preview Camera")
-            camera = bpy.data.objects.new("CL12 預覽相機 Preview Camera", data)
-            camera[tags.PREVIEW_CAMERA] = True
-            tags.collection_for(context, domain_mod.COLLECTION_NAME).objects.link(camera)
+    context.scene.collection.objects.link(camera)
+    camera.location = Vector(domain.location) + Vector(PREVIEW_OFFSET) * ref
+    camera.rotation_euler = (math.radians(90.0), 0.0, 0.0)
+    context.view_layer.update()
+    return camera
 
-        camera.data.lens = PREVIEW_LENS
-        camera.data.sensor_width = 36.0
-        # 1000mm 長焦代表相機離主體 23 倍遠，預設的裁切距離會看不到東西。
-        camera.data.clip_start = max(0.1, ref * 0.5)
-        camera.data.clip_end = ref * 100.0
 
-        camera.location = centre + Vector(PREVIEW_OFFSET) * ref
-        camera.rotation_euler = (math.radians(90.0), 0.0, 0.0)
-
-        context.scene.camera = camera
-        for area in context.screen.areas:
-            if area.type == "VIEW_3D":
-                area.spaces[0].region_3d.view_perspective = "CAMERA"
-                break
-
-        self.report({"INFO"}, "預覽相機已就位（1000mm，距離 %.1f）" % (ref * 23.537))
-        return {"FINISHED"}
+def remove_preview_camera(camera):
+    data = camera.data
+    bpy.data.objects.remove(camera, do_unlink=True)
+    if data is not None and data.users == 0:
+        bpy.data.cameras.remove(data)
 
 
 # ---------------------------------------------------------------- 自訂預設
 
-def _render_thumbnail(context, size=256):
-    """從目前相機算一張方形縮圖，回傳暫存檔路徑。沒有相機回 None。"""
+def render_thumbnail(context, size=256):
+    """用臨時的預覽相機算一張方形縮圖，回傳暫存檔路徑。
+
+    相機是現建現拆的：算完就移除、場景原本的相機還原回去。使用者只是存了
+    一張縮圖，場景裡不該因此多出一台相機。
+    有光域就用與內建縮圖同構圖的機位；沒有就退回場景現有的相機。
+    """
     scene = context.scene
-    if scene.camera is None:
+    domain = tags.find_domain(context)
+
+    temporary = None
+    previous = scene.camera
+    if domain is not None:
+        temporary = make_preview_camera(context, domain)
+        scene.camera = temporary
+    elif scene.camera is None:
         return None
 
     saved = (scene.render.resolution_x, scene.render.resolution_y,
@@ -495,20 +495,83 @@ def _render_thumbnail(context, size=256):
         (scene.render.resolution_x, scene.render.resolution_y,
          scene.render.resolution_percentage, scene.render.filepath,
          scene.render.image_settings.file_format) = saved
+        if temporary is not None:
+            scene.camera = previous
+            remove_preview_camera(temporary)
 
     return path if os.path.exists(path) else None
 
 
+def store_thumbnail(preset_id, image_path):
+    """把一張圖設成某組預設的縮圖。回傳 (成功, 訊息)。"""
+    data = presets.get(preset_id)
+    if data is None:
+        return False, "找不到這組預設"
+
+    encoded = presets.encode_thumbnail(image_path)
+    if not encoded:
+        return False, "讀不到圖片"
+
+    payload = {key: value for key, value in data.items()
+               if not key.startswith("_")}
+    payload["thumbnail_png"] = encoded
+    payload["_filename"] = data.get("_filename")
+    presets.save_user(payload)
+    previews.refresh()
+    return True, "縮圖已更新"
+
+
+class CL12_OT_replace_thumbnail(bpy.types.Operator):
+    bl_idname = "cl12.replace_thumbnail"
+    bl_label = "重算縮圖"
+    bl_description = "用預覽相機重新算一張縮圖給這組預設（相機是臨時的，算完會移除）"
+
+    preset_id: StringProperty()
+
+    def execute(self, context):
+        preset_id = self.preset_id or context.scene.cl12_preview
+        image = render_thumbnail(context)
+        if image is None:
+            self.report({"ERROR"}, "算圖失敗（場景裡沒有光域也沒有相機？）")
+            return {"CANCELLED"}
+        ok, message = store_thumbnail(preset_id, image)
+        self.report({"INFO"} if ok else {"ERROR"}, message)
+        return {"FINISHED"} if ok else {"CANCELLED"}
+
+
+class CL12_OT_load_thumbnail(bpy.types.Operator):
+    bl_idname = "cl12.load_thumbnail"
+    bl_label = "載入縮圖"
+    bl_description = "用你自己準備的圖片當這組預設的縮圖"
+
+    filepath: StringProperty(subtype="FILE_PATH")
+    filter_glob: StringProperty(default="*.png;*.jpg;*.jpeg", options={"HIDDEN"})
+    preset_id: StringProperty(options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        self.preset_id = self.preset_id or context.scene.cl12_preview
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+    def execute(self, context):
+        if not self.filepath or not os.path.exists(self.filepath):
+            self.report({"ERROR"}, "找不到這個檔案")
+            return {"CANCELLED"}
+        ok, message = store_thumbnail(self.preset_id, self.filepath)
+        self.report({"INFO"} if ok else {"ERROR"}, message)
+        return {"FINISHED"} if ok else {"CANCELLED"}
+
+
 class CL12_OT_new_preset(bpy.types.Operator):
     bl_idname = "cl12.new_preset"
-    bl_label = "新增預設"
+    bl_label = "新增燈光預設"
     bl_description = "把目前光域裡的燈光存成一組新的預設"
 
     preset_name: StringProperty(name="名稱", default="")
     thumb_source: bpy.props.EnumProperty(
         name="縮圖",
         items=(
-            ("RENDER", "從目前相機算圖", "用目前的相機視角算一張 256×256 縮圖"),
+            ("RENDER", "自動算縮圖", "用與內建縮圖同構圖的臨時相機算一張，算完自動移除"),
             ("FILE", "選擇圖片檔", "使用你自己準備好的圖片"),
             ("NONE", "先不要縮圖", "之後再補"),
         ),
@@ -530,14 +593,11 @@ class CL12_OT_new_preset(bpy.types.Operator):
         if self.thumb_source == "FILE":
             column.prop(self, "thumb_file")
         elif self.thumb_source == "RENDER":
+            # 按下確定就開始算圖，畫面會卡住。先講，不然使用者會以為當掉。
             note = column.column(align=True)
             note.scale_y = 0.85
-            if context.scene.camera is None:
-                note.label(text="場景沒有相機，會跳過縮圖", icon="ERROR")
-            else:
-                # 按下確定就開始算圖，畫面會卡住。先講，不然使用者會以為當掉。
-                note.label(text="按下確定後會算一張圖，", icon="INFO")
-                note.label(text="場景越複雜等越久，期間畫面會沒有反應。")
+            note.label(text="按下確定後會算一張圖，", icon="INFO")
+            note.label(text="場景越複雜等越久，期間畫面會沒有反應。")
 
     def execute(self, context):
         target = tags.find_domain(context)
@@ -563,11 +623,18 @@ class CL12_OT_new_preset(bpy.types.Operator):
 
         data, warnings = extract.extract(context, target, base)
 
+        # 光域裡什麼都沒有就別存——存出來會是一組套用後毫無反應的空預設，
+        # 縮圖牆上多一格，使用者卻找不出哪裡壞了。
+        if not data.get("objects"):
+            self.report({"ERROR"},
+                        "光域裡沒有燈光，先套用一組或自己加幾盞再存")
+            return {"CANCELLED"}
+
         thumbnail = None
         if self.thumb_source == "RENDER":
-            thumbnail = _render_thumbnail(context)
+            thumbnail = render_thumbnail(context)
             if thumbnail is None:
-                warnings.append("場景沒有相機或算圖失敗，這組先沒有縮圖")
+                warnings.append("算圖失敗，這組先沒有縮圖")
         elif self.thumb_source == "FILE":
             candidate = bpy.path.abspath(self.thumb_file)
             if candidate and os.path.exists(candidate):
@@ -593,7 +660,7 @@ class CL12_OT_new_preset(bpy.types.Operator):
 
 class CL12_OT_delete_preset(bpy.types.Operator):
     bl_idname = "cl12.delete_preset"
-    bl_label = "刪除這組預設"
+    bl_label = "刪除燈光預設"
     bl_description = "刪掉自訂預設。內建的 12 組刪不掉"
 
     preset_id: StringProperty()
@@ -621,7 +688,7 @@ class CL12_OT_delete_preset(bpy.types.Operator):
 
 class CL12_OT_export_preset(bpy.types.Operator):
     bl_idname = "cl12.export_preset"
-    bl_label = "匯出預設"
+    bl_label = "匯出燈光預設"
     bl_description = "把這組預設存成一個檔案，可以備份或分享給別人"
 
     filepath: StringProperty(subtype="FILE_PATH")
@@ -671,7 +738,7 @@ class CL12_OT_export_preset(bpy.types.Operator):
 
 class CL12_OT_import_preset(bpy.types.Operator):
     bl_idname = "cl12.import_preset"
-    bl_label = "匯入預設"
+    bl_label = "匯入燈光預設"
     bl_description = "讀入別人分享或自己備份的預設檔"
 
     filepath: StringProperty(subtype="FILE_PATH")
@@ -719,7 +786,8 @@ classes = (
     CL12_OT_remove_example,
     CL12_OT_view_example_camera,
     CL12_OT_switch_to_cycles,
-    CL12_OT_preview_camera,
+    CL12_OT_replace_thumbnail,
+    CL12_OT_load_thumbnail,
     CL12_OT_new_preset,
     CL12_OT_delete_preset,
     CL12_OT_export_preset,
