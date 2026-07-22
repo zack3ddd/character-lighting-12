@@ -110,9 +110,43 @@ SYNTHETIC = {
 }
 
 
+def isolate_user_data(presets):
+    """把測試的讀寫全部導到暫存區。
+
+    ⚠️ **這一段是為了保護使用者的資料，不是可有可無的整潔。**
+    `presets.user_dir()` 走的是 `bpy.utils.user_resource("CONFIG")`，
+    就算加了 `--factory-startup` 也還是指向真實的 AppData 設定夾。
+    2026-07-22 因此出過事：測試把合成燈光存成了阿哲的「簡單光板」使用者版本，
+    他打開 Blender 看到的是測試資料。
+
+    用環境變數隔離不夠可靠——那要記得每次都加。直接改掉函式，
+    不管誰用什麼方式啟動測試都碰不到真實資料。
+    """
+    sandbox = os.path.join(bpy.app.tempdir, "cl12_test_config")
+    presets_dir = os.path.join(sandbox, "presets")
+    cache_dir = os.path.join(sandbox, "thumb_cache")
+    for path in (presets_dir, cache_dir):
+        os.makedirs(path, exist_ok=True)
+        for stale in os.listdir(path):
+            try:
+                os.remove(os.path.join(path, stale))
+            except OSError:
+                pass
+
+    presets.user_dir = lambda: presets_dir
+    presets.thumb_cache_dir = lambda: cache_dir
+    presets.invalidate()
+    return presets_dir
+
+
 def main():
     from CharacterLighting12 import builder, extract, presets, tags  # noqa: F401
     import CharacterLighting12 as addon
+
+    sandbox = isolate_user_data(presets)
+    real = bpy.utils.user_resource("CONFIG", path="character_lighting_12")
+    check("測試資料已隔離到暫存區", sandbox.startswith(bpy.app.tempdir), sandbox)
+    check("沒有指向真實設定夾", not sandbox.startswith(real), real)
 
     print("\n=== 1. 註冊 ===")
     addon.register()
@@ -545,6 +579,16 @@ def main():
     print("\n=== 8. 反註冊 ===")
     addon.unregister()
     check("unregister() 沒有丟例外", True)
+
+    # 收尾再確認一次真實設定夾沒有被寫到——這是這支測試唯一不能出的錯。
+    real_presets = os.path.join(
+        bpy.utils.user_resource("CONFIG", path="character_lighting_12"), "presets")
+    leaked = []
+    if os.path.isdir(real_presets):
+        leaked = [name for name in os.listdir(real_presets)
+                  if name.endswith(".json") and (
+                      "smoke" in name or name.startswith("zz_"))]
+    check("沒有把測試資料寫進真實設定夾", not leaked, "、".join(leaked))
 
     try:
         os.remove(path)
