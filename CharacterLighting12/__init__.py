@@ -8,7 +8,7 @@
 bl_info = {
     "name": "Character Lighting 12",
     "author": "Zack (zack3d.art)",
-    "version": (0, 1, 0),
+    "version": (1, 0, 0),
     "blender": (3, 6, 0),
     "location": "3D View > Sidebar > Lighting",
     "description": "12 character lighting presets that scale to your subject.",
