@@ -68,6 +68,10 @@ The values were set in Cycles. Retro uses volumetric fog, and Sunset Mood and Gr
 4. Adjust with the sliders, or move any light yourself
 5. **Overwrite** saves over the current preset, **New Preset** saves a new one
 
+## Tutorial
+
+[![YouTube](https://img.youtube.com/vi/NFd1vk8QFXU/maxresdefault.jpg)](https://www.youtube.com/watch?v=NFd1vk8QFXU)
+
 ## Compatibility
 
 - Blender 3.6 / 4.5 / 5.0 / 5.2 LTS (all tested)
@@ -146,6 +150,10 @@ Released under the **GNU GPL**. Author: Zack3D.
 3. 翻縮圖、讀說明、按 **套用燈光**
 4. 用滑桿調整，或直接抓某一盞燈自己移
 5. **覆蓋** 存回目前這組，**新增燈光預設** 另存一組
+
+## 教學
+
+[![YouTube](https://img.youtube.com/vi/NFd1vk8QFXU/maxresdefault.jpg)](https://www.youtube.com/watch?v=NFd1vk8QFXU)
 
 ## 相容性
 
