@@ -1,4 +1,4 @@
-<!-- 封面圖：在 GitHub 網頁編輯此檔，把封面圖拖到這一行上方，會自動上傳並產生 <img> 連結 -->
+<img width="1280" height="720" alt="Blender新手燈光指南" src="https://github.com/user-attachments/assets/24860890-6e17-4703-9a39-3e5d7eb5d992" />
 
 # CharacterLighting12
 
