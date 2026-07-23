@@ -591,6 +591,19 @@ class CL12_OT_replace_thumbnail(bpy.types.Operator):
 
     def execute(self, context):
         preset_id = self.preset_id or context.scene.cl12_preview
+        settings = context.scene.cl12
+
+        # ⚠️ 縮圖必須拍「這組預設本身」，不是場景當下的樣子。
+        # 之前少了這一步：使用者瀏覽 A 但場景套著 B（甚至別組燈），
+        # 按重算就把 B 的畫面存成 A 的縮圖（阿哲遇過復古被存成綠圖）。
+        # 所以目標不是當前套用中的組時，先乾淨套用它再拍。
+        if settings.active_preset != preset_id and tags.find_domain(context):
+            try:
+                bpy.ops.cl12.apply_preset(preset_id=preset_id)
+            except RuntimeError as error:
+                self.report({"ERROR"}, "無法套用「%s」：%s" % (preset_id, error))
+                return {"CANCELLED"}
+
         image = render_thumbnail(context)
         if image is None:
             self.report({"ERROR"}, "算圖失敗（場景裡沒有光域也沒有相機？）")

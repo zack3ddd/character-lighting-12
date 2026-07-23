@@ -669,6 +669,32 @@ def main():
           len(ui.wrap_text("測試文字很長很長", 1.0, fake_measure)) == 8)
     check("空字串不會炸", ui.wrap_text("", 200.0, fake_measure) == [])
 
+    print("\n=== 6g. 重算縮圖拍的是「這組預設本身」===")
+    # 阿哲遇過的 bug：瀏覽 A、場景卻套著別組，按重算把別組的畫面存成 A 的縮圖。
+    # 場景先套 smoke_test（4 燈+多 mesh），再對內建 simple_panel（2 物件）重算縮圖。
+    # 修好的話，重算前會先把 simple_panel 乾淨套用，場景變成它的樣子。
+    bpy.ops.cl12.apply_preset(preset_id="smoke_test")
+    check("重算前場景套的是 smoke_test",
+          bpy.context.scene.cl12.active_preset == "smoke_test")
+    before_objs = len(tags.domain_children(domain))
+
+    if presets.get("simple_panel"):
+        bpy.ops.cl12.replace_thumbnail(preset_id="simple_panel")
+        check("重算縮圖後，場景已改套目標組 simple_panel",
+              bpy.context.scene.cl12.active_preset == "simple_panel",
+              bpy.context.scene.cl12.active_preset)
+        after_objs = len(tags.domain_children(domain))
+        check("光域內容換成 simple_panel（不是原本的 smoke_test）",
+              after_objs != before_objs or after_objs == 2,
+              "前 %d 後 %d" % (before_objs, after_objs))
+        # simple_panel 現在應有自訂縮圖（剛拍的）
+        presets.invalidate()
+        sp = presets.get("simple_panel")
+        check("simple_panel 取得剛拍的縮圖", bool(sp and sp.get("thumbnail_png")))
+        # 收拾：刪掉測試產生的自訂 simple_panel，回到內建
+        presets.delete_user("simple_panel")
+        bpy.ops.cl12.apply_preset(preset_id="smoke_test")
+
     print("\n=== 7. 錯誤路徑 ===")
     # operator 回報 ERROR 時 bpy.ops 會丟 RuntimeError，這是正常行為。
     try:
