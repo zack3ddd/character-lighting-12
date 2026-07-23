@@ -51,6 +51,9 @@
           0.68772
         ],
         "strength": 3.0
+      },
+      "visibility": {
+        "camera": false
       }
     },
     {

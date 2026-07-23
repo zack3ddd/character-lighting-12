@@ -8,7 +8,7 @@
 import blf
 import bpy
 
-from . import i18n, presets, properties, tags
+from . import domain as domain_mod, i18n, presets, properties, tags
 from .operators import EXAMPLE_COLLECTION
 
 PANEL_CATEGORY_EN = "Lighting"
@@ -137,6 +137,25 @@ class CL12_PT_main(bpy.types.Panel):
         box = layout.box()
         box.label(text=i18n.t("1. Subject", "1. 主體"), icon="OBJECT_DATA")
 
+        # 引導放在按鈕「上方」——先讀怎麼做，再按。而且跟著狀態變：
+        # 還沒選就給兩步指引，已選好就確認選了誰。新手最容易卡在這一步。
+        if domain is None:
+            candidates = domain_mod.subject_candidates(context)
+            guide = box.column(align=True)
+            guide.scale_y = 0.9
+            if candidates:
+                who = candidates[0].name if len(candidates) == 1 else (
+                    i18n.t("%d objects", "%d 個物件") % len(candidates))
+                guide.label(text=i18n.t("Selected: %s", "已選取：%s") % who,
+                            icon="CHECKMARK")
+                guide.label(text=i18n.t("Now press Build Light Domain below",
+                                        "接著按下方的「建立光域」"))
+            else:
+                guide.label(text=i18n.t("1. Click your character in the viewport",
+                                        "① 在 3D 視窗中點選你的角色"), icon="INFO")
+                guide.label(text=i18n.t("2. Then press Build Light Domain below",
+                                        "② 再按下方的「建立光域」"))
+
         column = box.column(align=True)
         column.scale_y = 1.3
         column.operator("cl12.create_domain",
@@ -164,10 +183,10 @@ class CL12_PT_main(bpy.types.Panel):
             isolate.prop(settings, "hide_other_objects", toggle=True,
                          text=i18n.t("Hide Objects", "隱藏原物件"))
         else:
-            hint = box.column(align=True)
-            hint.scale_y = 0.85
-            hint.label(text=i18n.t("Select a subject first",
-                                   "請先選取主體"), icon="INFO")
+            tip = box.column(align=True)
+            tip.scale_y = 0.8
+            tip.label(text=i18n.t("or press Load Example to explore",
+                                  "或按「載入範例」先看看效果"))
 
         example_row = box.row(align=True)
         has_example = any(tags.EXAMPLE in obj for obj in context.scene.objects)
