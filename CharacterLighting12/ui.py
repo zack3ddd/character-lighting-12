@@ -252,13 +252,6 @@ class CL12_PT_main(bpy.types.Panel):
         options.prop(settings, "wire_helpers",
                      text=i18n.t("Helpers as Wireframe", "輔助物件線框顯示"))
 
-        # 自己在光域外做的燈，要先加進光域才存得進預設。新手常卡在這，
-        # 選了物件卻不知道怎麼收進來——這顆按鈕就是給那個情況。
-        add = box.row(align=True)
-        add.operator("cl12.add_to_domain",
-                     text=i18n.t("Add Selected to Domain", "把選取物件加入光域"),
-                     icon="LINKED")
-
         box.operator("cl12.clear_lights",
                      text=i18n.t("Clear Lights", "清除燈光"), icon="TRASH")
 
@@ -303,6 +296,11 @@ class CL12_PT_main(bpy.types.Panel):
             hint.label(text=i18n.t("Browsing a different preset",
                                    "你正在瀏覽另一組預設"), icon="INFO")
 
+        # 自己在光域外做的燈，要先加進光域才存得進預設。新手常卡在這，
+        # 所以放在「新增燈光預設」正上方：選燈 → 加入光域 → 新增預設。
+        box.operator("cl12.add_to_domain",
+                     text=i18n.t("Add Selected to Domain", "把選取物件加入光域"),
+                     icon="LINKED")
         box.operator("cl12.new_preset",
                      text=i18n.t("New Light Preset", "新增燈光預設"), icon="ADD")
 
