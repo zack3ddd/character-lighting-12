@@ -126,6 +126,23 @@ def link_to_domain(context, domain, objects):
         obj.matrix_parent_inverse = Matrix.Identity(4)
 
 
+def attach_keeping_world(context, domain, objects):
+    """把使用者手動做好的物件掛進光域，視覺位置不變。
+
+    ⚠️ 跟 link_to_domain 相反：builder 產出的物件 location 已是「相對光域」
+    的值，用單位矩陣當 parent inverse；但使用者自己做的物件 location 是
+    世界座標，要用光域矩陣的逆當 parent inverse，物件才不會跳位。
+    """
+    collection = tags.collection_for(context, COLLECTION_NAME)
+    inverse = domain.matrix_world.inverted()
+    for obj in objects:
+        for existing in list(obj.users_collection):
+            existing.objects.unlink(obj)
+        collection.objects.link(obj)
+        obj.parent = domain
+        obj.matrix_parent_inverse = inverse
+
+
 def clear_domain_lights(domain):
     """刪掉光域底下所有本外掛生成的物件，光域本身留著。"""
     doomed = tags.domain_children(domain)

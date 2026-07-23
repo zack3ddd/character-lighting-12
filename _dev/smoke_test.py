@@ -678,22 +678,52 @@ def main():
           bpy.context.scene.cl12.active_preset == "smoke_test")
     before_objs = len(tags.domain_children(domain))
 
-    if presets.get("simple_panel"):
+    builtin_ids = {d["id"] for d in presets.ordered() if not d.get("_is_user")}
+    if "simple_panel" in builtin_ids:
+        before_ids = set(presets.load_all().keys())
         bpy.ops.cl12.replace_thumbnail(preset_id="simple_panel")
-        check("重算縮圖後，場景已改套目標組 simple_panel",
-              bpy.context.scene.cl12.active_preset == "simple_panel",
-              bpy.context.scene.cl12.active_preset)
-        after_objs = len(tags.domain_children(domain))
-        check("光域內容換成 simple_panel（不是原本的 smoke_test）",
-              after_objs != before_objs or after_objs == 2,
-              "前 %d 後 %d" % (before_objs, after_objs))
-        # simple_panel 現在應有自訂縮圖（剛拍的）
-        presets.invalidate()
-        sp = presets.get("simple_panel")
-        check("simple_panel 取得剛拍的縮圖", bool(sp and sp.get("thumbnail_png")))
-        # 收拾：刪掉測試產生的自訂 simple_panel，回到內建
-        presets.delete_user("simple_panel")
+
+        # 內建組重算縮圖 → 另存新組，原本的 simple_panel 不動。
+        new_ids = set(presets.load_all().keys()) - before_ids
+        check("內建組重算縮圖：另存為新組", len(new_ids) == 1, str(sorted(new_ids)))
+        check("原本的 simple_panel 仍是內建（沒被改成已修改）",
+              not presets.get("simple_panel").get("_is_user"))
+        if new_ids:
+            nid = new_ids.pop()
+            check("新組帶剛拍的縮圖", bool(presets.get(nid).get("thumbnail_png")))
+            check("新組名字是「簡單光板 2」之類",
+                  presets.localized(presets.get(nid), "name", "zh").endswith("2"),
+                  presets.localized(presets.get(nid), "name", "zh"))
+            presets.delete_user(nid)
         bpy.ops.cl12.apply_preset(preset_id="smoke_test")
+
+    print("\n=== 6h. 加入光域 ===")
+    # 使用者在光域外自己做一盞燈，一鍵加進光域後，存預設時要收得到它。
+    bpy.ops.object.light_add(type="POINT", location=(3, 3, 3))
+    outside = bpy.context.object
+    outside.name = "MyOwnLight"
+    bpy.context.view_layer.update()
+    check("自製燈一開始不在光域底下",
+          outside.name not in {o.name for o in domain.children_recursive})
+
+    world_before = tuple(outside.matrix_world.translation)
+    for obj in bpy.context.selected_objects:
+        obj.select_set(False)
+    outside.select_set(True)
+    bpy.context.view_layer.objects.active = outside
+    check("加入光域按鈕在有選取時可用", bpy.ops.cl12.add_to_domain.poll())
+    bpy.ops.cl12.add_to_domain()
+    bpy.context.view_layer.update()
+
+    check("自製燈已在光域底下",
+          outside.name in {o.name for o in domain.children_recursive})
+    world_after = tuple(outside.matrix_world.translation)
+    close("加入後視覺位置不變（沒跳位）", list(world_after), list(world_before), 1e-3)
+    check("加入的燈會被 extract 收進預設",
+          any(s.get("name") == "MyOwnLight"
+              for s in extract.extract(bpy.context, domain, {"objects": []})[0]["objects"]))
+    bpy.data.objects.remove(outside, do_unlink=True)
+    bpy.ops.cl12.apply_preset(preset_id="smoke_test")
 
     print("\n=== 7. 錯誤路徑 ===")
     # operator 回報 ERROR 時 bpy.ops 會丟 RuntimeError，這是正常行為。

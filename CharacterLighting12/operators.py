@@ -239,8 +239,16 @@ class CL12_OT_save_preset(bpy.types.Operator):
             self.report({"ERROR"}, "目前沒有套用中的預設，不知道要存到哪一組")
             return {"CANCELLED"}
 
+        # 內建 12 組是出廠設定、不覆蓋——改就另存為新的一組。
+        if is_builtin(preset_id):
+            _new, name, warnings = save_as_new(context, preset_id, from_scene=True)
+            for warning in warnings:
+                self.report({"WARNING"}, warning)
+            self.report({"INFO"}, "內建預設不覆蓋，已另存為「%s」" % name["zh"])
+            return {"FINISHED"}
+
         data, warnings = extract.extract(context, target, base)
-        data["base_id"] = preset_id
+        data["base_id"] = base.get("base_id", preset_id)
         path = presets.save_user(data)
 
         for warning in warnings:
@@ -563,6 +571,51 @@ def render_thumbnail(context, size=THUMB_SIZE):
     return path if os.path.exists(path) else None
 
 
+def is_builtin(preset_id):
+    """這組是不是內建的出廠預設（相對於使用者自己新增的）。"""
+    data = presets.get(preset_id)
+    return bool(data) and not data.get("_is_user")
+
+
+def save_as_new(context, base_id, from_scene, thumbnail=None):
+    """把 base 另存成一組新的自訂預設，回傳 (new_id, name, warnings)。
+
+    內建 12 組是出廠設定、不可改；使用者一動它就走這裡，生一個「復古 2」，
+    原本的復古保持乾淨。from_scene=True 時燈光數值從目前光域抽取
+    （含使用者的臨場調整）；否則照抄 base 的燈光（只換縮圖的情況）。
+    """
+    base = presets.get(base_id)
+    new_id, name = presets.unique_custom_name(base)
+    data = {
+        "schema": presets.SCHEMA,
+        "id": new_id,
+        "name": name,
+        "desc": base.get("desc") or {"en": "", "zh": ""},
+        "tip": base.get("tip") or {"en": "", "zh": ""},
+        "engine_note": base.get("engine_note"),
+        "_filename": "zz_%s.json" % new_id,
+    }
+
+    warnings = []
+    if from_scene:
+        domain = tags.find_domain(context)
+        data, warnings = extract.extract(context, domain, data)
+    else:
+        data["objects"] = base.get("objects", [])
+        data["world"] = base.get("world", {})
+
+    if thumbnail:
+        encoded = presets.encode_thumbnail(thumbnail)
+        if encoded:
+            data["thumbnail_png"] = encoded
+
+    presets.save_user(data)
+    previews.refresh()
+    context.scene.cl12.active_preset = new_id
+    context.scene.cl12_preview = new_id
+    return new_id, name, warnings
+
+
 def store_thumbnail(preset_id, image_path):
     """把一張圖設成某組預設的縮圖。回傳 (成功, 訊息)。"""
     data = presets.get(preset_id)
@@ -608,6 +661,14 @@ class CL12_OT_replace_thumbnail(bpy.types.Operator):
         if image is None:
             self.report({"ERROR"}, "算圖失敗（場景裡沒有光域也沒有相機？）")
             return {"CANCELLED"}
+
+        # 內建組換縮圖也要另存新組，原本的封面不動。
+        if is_builtin(preset_id):
+            _new, name, _w = save_as_new(context, preset_id, from_scene=False,
+                                         thumbnail=image)
+            self.report({"INFO"}, "內建預設不覆蓋，已另存為「%s」" % name["zh"])
+            return {"FINISHED"}
+
         ok, message = store_thumbnail(preset_id, image)
         self.report({"INFO"} if ok else {"ERROR"}, message)
         return {"FINISHED"} if ok else {"CANCELLED"}
@@ -631,9 +692,66 @@ class CL12_OT_load_thumbnail(bpy.types.Operator):
         if not self.filepath or not os.path.exists(self.filepath):
             self.report({"ERROR"}, "找不到這個檔案")
             return {"CANCELLED"}
+
+        if is_builtin(self.preset_id):
+            _new, name, _w = save_as_new(context, self.preset_id, from_scene=False,
+                                         thumbnail=self.filepath)
+            self.report({"INFO"}, "內建預設不覆蓋，已另存為「%s」" % name["zh"])
+            return {"FINISHED"}
+
         ok, message = store_thumbnail(self.preset_id, self.filepath)
         self.report({"INFO"} if ok else {"ERROR"}, message)
         return {"FINISHED"} if ok else {"CANCELLED"}
+
+
+def _addable_to_domain(obj, context, domain):
+    """這個物件可不可以加進光域。"""
+    if obj.type not in {"LIGHT", "MESH"}:
+        return False
+    if tags.DOMAIN in obj or tags.EXAMPLE in obj:
+        return False
+    if domain is not None and obj in domain.children_recursive:
+        return False        # 已經在光域底下了
+    subjects = set(domain.get(tags.DOMAIN_SUBJECT) or []) if domain else set()
+    return obj.name not in subjects   # 主體本身不算
+
+
+class CL12_OT_add_to_domain(bpy.types.Operator):
+    bl_idname = "cl12.add_to_domain"
+    bl_label = "加入光域"
+    bl_description = ("把選取的燈光或物件加進光域。自己在光域外做的燈，"
+                     "要先加進來才存得進預設")
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        domain = tags.find_domain(context)
+        return domain is not None and any(
+            _addable_to_domain(obj, context, domain)
+            for obj in context.selected_objects)
+
+    def execute(self, context):
+        domain = tags.find_domain(context)
+        if domain is None:
+            self.report({"ERROR"}, "請先建立光域")
+            return {"CANCELLED"}
+
+        objects = [obj for obj in context.selected_objects
+                   if _addable_to_domain(obj, context, domain)]
+        if not objects:
+            self.report({"WARNING"}, "沒有可加入的物件（只收燈光與網格）")
+            return {"CANCELLED"}
+
+        # 蓋上標記，讓它跟外掛生成的燈一樣：存預設時被收進去、清除時被清掉。
+        preset_id = context.scene.cl12.active_preset or "custom"
+        for obj in objects:
+            tags.mark(obj, preset_id, "custom")
+            if obj.type == "MESH":
+                obj[tags.PRIMITIVE] = "MESH"
+
+        domain_mod.attach_keeping_world(context, domain, objects)
+        self.report({"INFO"}, "已加入 %d 個物件到光域" % len(objects))
+        return {"FINISHED"}
 
 
 class CL12_OT_new_preset(bpy.types.Operator):
@@ -860,6 +978,7 @@ classes = (
     CL12_OT_remove_example,
     CL12_OT_view_example_camera,
     CL12_OT_switch_to_cycles,
+    CL12_OT_add_to_domain,
     CL12_OT_replace_thumbnail,
     CL12_OT_load_thumbnail,
     CL12_OT_new_preset,

@@ -165,6 +165,24 @@ def encode_thumbnail(path):
         return None
 
 
+def unique_custom_name(base):
+    """從一組預設 base 衍生出一個沒被用過的新名字與 id，例如「復古 2」。
+
+    給「內建組不可改、要改就另存新組」用：使用者動內建的復古，
+    就自動生一個「復古 2」，原本的復古保持出廠狀態。
+    """
+    everyone = load_all()
+    used_zh = {localized(d, "name", "zh") for d in everyone.values()}
+    zh = localized(base, "name", "zh") or base["id"]
+    en = localized(base, "name", "en") or base["id"]
+
+    number = 2
+    while ("%s %d" % (zh, number)) in used_zh:
+        number += 1
+    new_id = make_id("%s %d" % (en, number), set(everyone))
+    return new_id, {"zh": "%s %d" % (zh, number), "en": "%s %d" % (en, number)}
+
+
 def make_id(name, existing):
     """從名稱做出一個唯一的 id。中文名稱做不出英數 id 時退回時間戳。"""
     slug = re.sub(r"[^a-z0-9]+", "_", (name or "").lower()).strip("_")

@@ -252,6 +252,13 @@ class CL12_PT_main(bpy.types.Panel):
         options.prop(settings, "wire_helpers",
                      text=i18n.t("Helpers as Wireframe", "輔助物件線框顯示"))
 
+        # 自己在光域外做的燈，要先加進光域才存得進預設。新手常卡在這，
+        # 選了物件卻不知道怎麼收進來——這顆按鈕就是給那個情況。
+        add = box.row(align=True)
+        add.operator("cl12.add_to_domain",
+                     text=i18n.t("Add Selected to Domain", "把選取物件加入光域"),
+                     icon="LINKED")
+
         box.operator("cl12.clear_lights",
                      text=i18n.t("Clear Lights", "清除燈光"), icon="TRASH")
 
@@ -266,18 +273,24 @@ class CL12_PT_main(bpy.types.Panel):
                          and not current.get("_overrides_builtin"))
 
         # ⚠️ 覆蓋的對象是「已套用的那組」，不是縮圖牆上正在瀏覽的那組。
-        # 兩者可以不同（翻縮圖不會改變場景裡的燈），所以按鈕上一定要寫出
-        # 實際會被蓋掉的名字——不然使用者會覆蓋到他沒在看的預設。
+        # 而且內建 12 組不覆蓋——動它就另存新組，按鈕文字也跟著變，
+        # 使用者一眼就知道會發生什麼。
         applied = presets.get(settings.active_preset)
+        applied_builtin = applied is not None and not applied.get("_is_user")
+
         row = box.row(align=True)
         overwrite = row.row(align=True)
         overwrite.enabled = applied is not None
-        if applied is not None:
+        if applied is None:
+            label, icon = i18n.t("Save", "儲存"), "FILE_TICK"
+        elif applied_builtin:
+            # 內建組：按下去是另存新組，不是覆蓋。
+            label, icon = i18n.t("Save as New Preset", "另存為新預設"), "ADD"
+        else:
             label = i18n.t("Overwrite \"%s\"", "覆蓋「%s」") % presets.localized(
                 applied, "name", i18n.language())
-        else:
-            label = i18n.t("Overwrite", "覆蓋目前這組")
-        overwrite.operator("cl12.save_preset", text=label, icon="FILE_TICK")
+            icon = "FILE_TICK"
+        overwrite.operator("cl12.save_preset", text=label, icon=icon)
 
         if applied is not None and applied.get("_is_user"):
             row.operator("cl12.revert_preset",
