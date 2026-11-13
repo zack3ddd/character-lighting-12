@@ -74,7 +74,7 @@ The values were set in Cycles. Retro uses volumetric fog, and Sunset Mood and Gr
 
 ## Compatibility
 
-- Blender 3.6 / 4.5 / 5.0 / 5.2 LTS (all tested)
+- Blender 3.6 / 4.5 / 5.0 / 5.2 LTS (all tested); also supports 5.3
 - Cycles only
 
 ## License
@@ -157,7 +157,7 @@ Released under the **GNU GPL**. Author: Zack3D.
 
 ## 相容性
 
-- Blender 3.6 / 4.5 / 5.0 / 5.2 LTS（皆已測試）
+- Blender 3.6 / 4.5 / 5.0 / 5.2 LTS（皆已測試）；也支援 5.3
 - 僅支援 Cycles
 
 ## 授權
